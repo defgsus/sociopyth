@@ -1,20 +1,16 @@
 # encoding=utf-8
 
+"""
+Once files have been downloaded with kek_download.py,
+this prog creates an xml from the htmls.
+"""
+
+
 from bs4 import BeautifulSoup, Tag
 import xml.etree.ElementTree as ET
-from kek_tools import kek_scan_index, kek_media_filename
+from kek_tools import kek_scan_index, kek_media_filename, kek_write_company_xml, Company, Share
 
 num_errors = 0
-
-class Company:
-	name = ""
-	url = ""
-	shares = {}		# dict of unicode/Share
-	titles = set()	# set of unicode
-
-class Share:
-	name = ""
-	percent = 0.0
 
 media = {}
 companies = {}
@@ -147,29 +143,6 @@ def kek_parse_media(local_name):
 	kek_parse_shares(shares_ul, m_owner)
 	
 		
-def kek_write_company_xml(filename):
-	
-	root = ET.Element("kek")
-	comps = ET.SubElement(root, "companies")
-
-	for c in companies.values():
-		comp = ET.SubElement(comps, "company")
-		comp.set("name", c.name)
-		comp.set("url", c.url)
-		for m in c.titles:
-			title = ET.SubElement(comp, "title")
-			title.set("name", m)
-		for s in c.shares.values():
-			share = ET.SubElement(comp, "share")
-			share.set("name", s.name);
-			share.set("p", s.percent);
-
-	# store
-	tree = ET.ElementTree(root)
-	tree.write(filename, encoding="utf-8", xml_declaration=True)
-	# and print
-	ET.dump(root);
-
 
 ########################################################################
 
@@ -207,6 +180,6 @@ for c in companies.values():
 	for s in c.shares.values():
 		print ' share: ' + str(s.percent) + '% "' + s.name + '"'
 
-kek_write_company_xml("./kek_owner.xml")
+kek_write_company_xml(companies, "./kek_owner.xml")
 		
 print str(num_errors) + " errors."

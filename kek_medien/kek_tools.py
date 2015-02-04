@@ -1,7 +1,6 @@
 # encoding=utf-8
 
 # http://www.kek-online.de/no_cache/information/mediendatenbank.html?L=0%23&m=735&mt=1,2,3,4&s=&f=0
-# local_name = url.split(base_url)[-1]
 
 #import os, sys
 #lib_path = os.path.abspath('../modules')
@@ -10,6 +9,19 @@
 from bs4 import BeautifulSoup, Tag
 #from fun_with_sqlite import connect, create_schema, create_table
 import xml.etree.ElementTree as ET
+
+
+class Company:
+	name = ""
+	url = ""
+	shares = {}		# dict of unicode/Share
+	titles = set()	# set of unicode
+
+class Share:
+	name = ""
+	percent = 0.0
+
+
 
 base_url = "http://www.kek-online.de/"
 
@@ -135,3 +147,71 @@ def kek_download_media(medien):
 	
 	return True
 
+
+################### xml ####################
+
+
+def kek_write_company_xml(companies, filename):
+	"""Writes the contents of companies to an xml file.
+	companies must be a dict of unicode/Company."""
+	
+	root = ET.Element("kek")
+	comps = ET.SubElement(root, "companies")
+
+	for c in companies.values():
+		comp = ET.SubElement(comps, "company")
+		comp.set("name", c.name)
+		comp.set("url", c.url)
+		for m in c.titles:
+			title = ET.SubElement(comp, "title")
+			title.set("name", m)
+		for s in c.shares.values():
+			share = ET.SubElement(comp, "share")
+			share.set("p", s.percent);
+			share.set("name", s.name);
+
+	# store
+	tree = ET.ElementTree(root)
+	tree.write(filename, encoding="utf-8", xml_declaration=True)
+	# and print
+	ET.dump(root);
+
+
+def kek_read_company_xml(filename):
+	"""Reads the contents of a company xml file.
+	Returns a dict of unicode/Company. 
+	No error checking here - i trust myself.."""
+	
+	ret = {}	
+	
+	tree = ET.parse(filename)
+	root = tree.getroot()
+	
+	# go through all company tags
+	for comp in root.iter("company"):
+		
+		# get a key/value dict with all attributes
+		attr = comp.attrib
+		
+		# create the runtime structure
+		c = Company()
+		c.name = attr["name"]
+		c.url = attr["url"]
+		c.titles = set()
+		c.shares = {}
+		
+		# get all media titles
+		for media in comp.iter("title"):
+			c.titles.add(media.attrib["name"])
+		
+		# get owned companies	
+		for share in comp.iter("share"):
+			s = Share()
+			s.name = share.attrib["name"]
+			s.percent = float(share.attrib["p"])
+			c.shares[s.name] = s
+		
+		# store in dict
+		ret[c.name] = c
+		
+	return ret
