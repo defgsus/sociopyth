@@ -2,11 +2,12 @@
 
 import csv, sqlite3
 
-from fun_with_wiki import write_csv2
+#from fun_with_wiki import write_csv2
 
 
 def connect(sqlite_file):
     """ Make connection to an SQLite database file """
+    print "opening sqlite db " + sqlite_file
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
     return conn, c
@@ -84,9 +85,7 @@ def insert_rows(conn, curs, l, name_table, schema, str_marks):
 #    print sql
     curs.execute(sql, l)
     #conn.commit()
-    
-    
-#conn, curs = connect('zeit.db')
+
    
     
 def select_all_col(conn, curs, table):
@@ -126,7 +125,6 @@ def select_one_marker(conn, curs, table, marker, l_col_to_sel, col_to_search):
 #    print len(l)
     return l
     
-#conn, curs = connect('zeit.db') 
 def select_precise_marker(conn, curs, table, marker, l_col_to_sel, col_to_search):
     str_col_sel = l_col_to_sel[0]
     for i in l_col_to_sel[1:]:
@@ -252,7 +250,7 @@ def csv_to_table2(a_csv, db, name_table, l_schema, with_id, table_exists):
         create_db_schema(conn, curs, name_table, l_schema, with_id)
     insert_rows2(a_csv, conn, curs, name_table, l_schema)
     
-conn, curs = connect('zeit.db')    
+#conn, curs = connect('zeit.db')    
 def table_to_csv(conn, curs, name_table, a_csv):
     l_rows = select_all_col(conn, curs, name_table)
 #    print l_rows[1]

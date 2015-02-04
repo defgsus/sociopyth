@@ -3,7 +3,12 @@
 # http://www.kek-online.de/no_cache/information/mediendatenbank.html?L=0%23&m=735&mt=1,2,3,4&s=&f=0
 # local_name = url.split(base_url)[-1]
 
+import os, sys
+lib_path = os.path.abspath('../modules')
+sys.path.append(lib_path)
+
 from bs4 import BeautifulSoup
+from fun_with_sqlite import connect, create_schema, create_table
 
 base_url = "http://www.kek-online.de/"
 
@@ -74,44 +79,24 @@ def kek_scan_index(local_name):
 		print "ERROR index table not found in " + local_name
 		return False
 	
-	# entry start
-	i = text[i:].find('<td class="mediaName');
-	if (i < 0):
-		print "ERROR missing media table in " + local_name
-		return False
-	
 	soup = BeautifulSoup(text[i:])
 
 	for td in soup.find_all("td", "mediaName"):
 		for a in td.find_all("a"):
-			print a.get("href")
-	
-	"""	
-	while (i > 0):
-		# link
-		i = text[i:].find('<a href="');
-		if (i < 0): 
-			print "ERROR missing <a> in " + local_name
-			return False
-			
-		j = text[i:].find('>')
-		if (j < 0): 
-			print "ERROR missing > in " + local_name
-			return False
-			
-		print text[i:i+j] + " " + str(i) + " " + str(j)
-		
-		# next entry
-		i = -1#text[i:].find('<td class="mediaName');
-	"""
+			print a.get("href") + " " + a.text
 	
 	f.close();
 	
 	
 	
+def test_sqlite():
+	con, curs = connect("kek.sqlite")
+	
+	#create_table(con, curs, "kek", "( 
+	
+test_sqlite()
 
+#kek_scan_index("./html/index.html")
 
-
-kek_scan_index("./html/index.html")
 
 # if kek_down() == False: print "failed.."
