@@ -7,7 +7,7 @@
 #lib_path = os.path.abspath('../modules')
 #sys.path.append(lib_path)
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 #from fun_with_sqlite import connect, create_schema, create_table
 import xml.etree.ElementTree as ET
 
@@ -134,31 +134,4 @@ def kek_download_media(medien):
 		if download(i, local_name) == False: continue
 	
 	return True
-
-		
-"""	
-def test_sqlite():
-	con, curs = connect("kek.sqlite")
-	
-	#create_table(con, curs, "kek", "( 
-	
-#test_sqlite()
-
-def test_xml():
-	root = ET.Element("kek")
-	med = ET.SubElement(root, "media")
-	med.text = "Medium"
-	
-	ET.dump(root);
-"""
-
-########################################################################
-
-# download the index-by-media html
-if kek_get_index() == False: print "failed.."; quit()
-# scan the index file for all media titles
-medien = kek_scan_index("./html/index.html")
-# download each title's html
-kek_download_media(medien)
-
 

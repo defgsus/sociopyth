@@ -1,4 +1,4 @@
-import kek_tools.py
+from kek_tools import *
 
 # download the index-by-media html
 if kek_get_index() == False: print "failed.."; quit()
