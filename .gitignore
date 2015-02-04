@@ -1,6 +1,9 @@
 # actual data
 html/
 *.csv
+*.xml
+*.db
+*.sql*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

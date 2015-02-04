@@ -1,7 +1,8 @@
 # encoding=utf-8
 
-from kek_tools import kek_scan_index, kek_media_filename
 from bs4 import BeautifulSoup, Tag
+import xml.etree.ElementTree as ET
+from kek_tools import kek_scan_index, kek_media_filename
 
 num_errors = 0
 
@@ -32,7 +33,8 @@ def kek_parse_shares(shares_ul, owner, debug_prefix = ""):
 		owned_by = a.text
 		owned_by_url = a.get("href")
 		if not type(owned_by) is unicode or not type(owned_by_url) is str: continue
-			
+		owned_by = owned_by.strip();
+		
 		# save company/url
 		if not companies.has_key(owned_by):
 			c = Company()
@@ -119,6 +121,8 @@ def kek_parse_media(local_name):
 		return False
 	
 	m_owner_url = m_owner_url.encode("UTF-8")
+	m_owner = m_owner.strip();
+	m_type = m_type.strip();
 
 	# got that :)
 	print m_name + ", " + m_type + ", " + m_owner + ", " + m_owner_url
@@ -143,15 +147,29 @@ def kek_parse_media(local_name):
 	kek_parse_shares(shares_ul, m_owner)
 	
 		
-"""	
-
-def test_xml():
-	root = ET.Element("kek")
-	med = ET.SubElement(root, "media")
-	med.text = "Medium"
+def kek_write_company_xml(filename):
 	
+	root = ET.Element("kek")
+	comps = ET.SubElement(root, "companies")
+
+	for c in companies.values():
+		comp = ET.SubElement(comps, "company")
+		comp.set("name", c.name)
+		comp.set("url", c.url)
+		for m in c.titles:
+			title = ET.SubElement(comp, "title")
+			title.set("name", m)
+		for s in c.shares.values():
+			share = ET.SubElement(comp, "share")
+			share.set("name", s.name);
+			share.set("p", s.percent);
+
+	# store
+	tree = ET.ElementTree(root)
+	tree.write(filename, encoding="utf-8", xml_declaration=True)
+	# and print
 	ET.dump(root);
-"""
+
 
 ########################################################################
 
@@ -188,6 +206,7 @@ for c in companies.values():
 		print ' media: "' + m + '"'
 	for s in c.shares.values():
 		print ' share: ' + str(s.percent) + '% "' + s.name + '"'
+
+kek_write_company_xml("./kek_owner.xml")
 		
 print str(num_errors) + " errors."
-
