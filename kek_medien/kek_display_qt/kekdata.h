@@ -31,6 +31,11 @@ public:
         QString name, url;
         std::vector<Share> shares;
         std::vector<Title> titles;
+        int total_titles, total_shares;
+        float total_shares_percent;
+    private:
+        friend KekData;
+        bool counted_;
     };
 
     // ---------------- ctor -------------------
@@ -44,6 +49,8 @@ public:
 
     bool loadXml(const QString& fn);
 
+    QString toString() const;
+
     /** Always returns a Company struct.
         Ownership stays with this class. */
     Company * getCompany(const QString& name);
@@ -55,7 +62,8 @@ public:
 
 private:
 
-    void addCompany_(Company *);
+    void calcValues_();
+    void count_(Company * ) const;
 
     std::map<QString, std::shared_ptr<Company>> companies_;
     std::map<Company*, SpringSystem::Node*> nodemap_;

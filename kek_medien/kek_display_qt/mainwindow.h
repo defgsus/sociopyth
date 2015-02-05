@@ -8,8 +8,6 @@
 #include "kekscene.h"
 #include "kekdata.h"
 
-class Thread;
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -33,7 +31,6 @@ private:
     SpringSystem * sys_;
     KekScene * scene_;
     QGraphicsView * view_;
-    Thread * thread_;
     QTimer * timer_;
 };
 

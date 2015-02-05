@@ -1,14 +1,42 @@
+
 #include <random>
+
+#include <QThread>
+
 #include "springsystem.h"
 
+
+class SpringSystem::Thread : public QThread
+{
+public:
+    Thread(SpringSystem * s, QObject * p = 0) : QThread(p), sys(s), stop(false) { }
+
+    void run() Q_DECL_OVERRIDE
+    {
+        stop = false;
+        while (!stop)
+        {
+            sys->step(0.001);
+        }
+    }
+
+    SpringSystem * sys;
+    volatile bool stop;
+};
+
+
+
+
 SpringSystem::SpringSystem()
+    : thread_       (0)
 {
 
 }
 
 SpringSystem::~SpringSystem()
 {
-
+    stopThread();
+    delete thread_;
 }
 
 void SpringSystem::clear()
@@ -24,6 +52,7 @@ SpringSystem::Node * SpringSystem::createNode(void *usr)
     auto n = new Node;
     n->user = usr;
     n->pos = vec2(Float(rnd()) / rnd.max() - .5, Float(rnd()) / rnd.max() - .5) * 10.;
+    n->locked = false;
 
     nodes_.push_back(std::shared_ptr<Node>(n));
     return n;
@@ -45,14 +74,31 @@ SpringSystem::Spring * SpringSystem::connect(Node * n1, Node * n2, Float rest_di
 
 
 
+void SpringSystem::startThread()
+{
+    if (!thread_)
+        thread_ = new Thread(this);
+    thread_->start();
+}
+
+void SpringSystem::stopThread()
+{
+    if (thread_ && thread_->isRunning())
+    {
+        thread_->stop = true;
+        thread_->wait();
+    }
+}
+
 
 void SpringSystem::step(Float delta)
 {
-    relax(delta);
-    applyIntertia(delta, 0.5);
+    //relaxDistance(delta/10., 3.);
+    relaxSprings(delta);
+    applyIntertia(delta, 0.1);
 }
 
-void SpringSystem::relax(Float delta)
+void SpringSystem::relaxSprings(Float delta)
 {
     for (auto & i : springs_)
     {
@@ -63,9 +109,39 @@ void SpringSystem::relax(Float delta)
         s->dist = dir.length();
 
         // spring force
-        vec2 f = delta * (s->rest_dist - s->dist) * (dir / s->dist);
-        s->n1->intertia -= f;
-        s->n2->intertia += f;
+        vec2 f = delta * .5 * (s->rest_dist - s->dist) * (dir / s->dist);
+        if (!s->n1->locked)
+            s->n1->intertia -= f;
+        if (!s->n2->locked)
+            s->n2->intertia += f;
+    }
+}
+
+void SpringSystem::relaxDistance(Float delta, Float min_dist)
+{
+    Float min_dist_s = min_dist * min_dist;
+
+    for (uint i=0; i<nodes_.size(); ++i)
+    {
+        Node * n1 = nodes_[i].get();
+
+        for (uint j=i+1; j<nodes_.size(); ++j)
+        {
+            Node * n2 = nodes_[j].get();
+
+            vec2 dir = n2->pos - n1->pos;
+            Float ds = dir.lengthSquared();
+
+            if (ds < min_dist_s && ds > Float(0))
+            {
+                Float d = std::sqrt(ds);
+                vec2 f = delta * .5 * (min_dist - d) * (dir / d);
+                if (!n1->locked)
+                    n1->intertia -= f;
+                if (!n2->locked)
+                    n2->intertia += f;
+            }
+        }
     }
 }
 
@@ -74,9 +150,12 @@ void SpringSystem::applyIntertia(Float delta, Float damp)
     for (auto & i : nodes_)
     {
         Node * n = i.get();
+        if (n->locked)
+            continue;
 
         n->pos += delta * n->intertia;
 
         n->intertia -= delta * damp * n->intertia;
     }
 }
+

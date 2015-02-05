@@ -4,23 +4,6 @@
 #include "mainwindow.h"
 #include "kekdata.h"
 
-class Thread : public QThread
-{
-public:
-    Thread(SpringSystem * s, QObject * p) : QThread(p), sys(s), stop(false) { }
-
-    void run() Q_DECL_OVERRIDE
-    {
-        stop = false;
-        while (!stop)
-        {
-            sys->step(0.0001);
-        }
-    }
-
-    SpringSystem * sys;
-    volatile bool stop;
-};
 
 
 
@@ -36,7 +19,6 @@ MainWindow::MainWindow(QWidget *parent)
     sys_ = new SpringSystem();
     createSys_();
 
-    thread_ = new Thread(sys_, this);
     timer_ = new  QTimer(this);
     timer_->setSingleShot(false);
     timer_->setInterval(1000 / 10);
@@ -76,7 +58,7 @@ void MainWindow::createSys_()
 {
     sys_->clear();
 
-#if 1
+#if 0
     std::vector<SpringSystem::Node*> nodes;
     for (int i=0; i<100; ++i)
     {
@@ -85,7 +67,7 @@ void MainWindow::createSys_()
                     );
     }
 
-    for (int i=0; i<300; ++i)
+    for (int i=0; i<10; ++i)
     {
         int n1 = rand() % nodes.size(),
             n2 = rand() % nodes.size();
@@ -106,15 +88,13 @@ void MainWindow::createSys_()
 
 void MainWindow::start()
 {
-    thread_->start();
+    sys_->startThread();
     timer_->start();
 }
 
 void MainWindow::stop()
 {
-    timer_->stop();
-    thread_->stop = true;
-    thread_->wait();
+    sys_->stopThread();
     updateView();
 }
 

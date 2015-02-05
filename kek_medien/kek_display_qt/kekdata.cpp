@@ -1,6 +1,7 @@
 
 #include <QDomDocument>
 #include <QFile>
+#include <QTextStream>
 #include <QDebug>
 
 #include "kekdata.h"
@@ -21,7 +22,6 @@ void KekData::clear()
     companies_.clear();
 }
 
-
 KekData::Company * KekData::getCompany(const QString& name)
 {
     auto i = companies_.find(name);
@@ -35,6 +35,40 @@ KekData::Company * KekData::getCompany(const QString& name)
     companies_.insert(std::make_pair(name, p));
 
     return c;
+}
+
+SpringSystem::Node * KekData::nodeForCompany(Company * c)
+{
+    auto i = nodemap_.find(c);
+    if (i == nodemap_.end())
+        return 0;
+    return i->second;
+}
+
+QString KekData::toString() const
+{
+    QString ret;
+    QTextStream s(&ret);
+
+    for (auto const & i : companies_)
+    {
+        Company * c = i.second.get();
+
+        s << "[" << c->name << "]";
+        if (c->total_titles)
+            s << " total titles " << c->total_titles << ";";
+        if (c->total_shares)
+            s << " total shares " << c->total_shares << " (" << c->total_shares_percent << "%);";
+        s << "\n";
+
+        for (const Share & sh : c->shares)
+            s << "  S: " << sh.percent << "% " << sh.company->name << "\n";
+
+        for (const Title & t : c->titles)
+            s << "  T: \"" << t.name << "\"\n";
+    }
+
+    return ret;
 }
 
 
@@ -89,16 +123,58 @@ bool KekData::loadXml(const QString &fn)
 
     }
 
+    calcValues_();
+
+    qDebug() << toString();
+
     return true;
 }
 
-SpringSystem::Node * KekData::nodeForCompany(Company * c)
+
+
+void KekData::calcValues_()
 {
-    auto i = nodemap_.find(c);
-    if (i == nodemap_.end())
-        return 0;
-    return i->second;
+    for (auto const & i : companies_)
+    {
+        Company * c = i.second.get();
+        c->counted_ = false;
+        c->total_shares = c->shares.size();
+        c->total_titles = c->titles.size();
+        c->total_shares_percent = 0;
+    }
+
+    for (auto const & i : companies_)
+    {
+        Company * c = i.second.get();
+
+        count_(c);
+    }
 }
+
+/* inefficient and easy */
+void KekData::count_(Company * c) const
+{
+    int t = 0, ts = 0;
+    float tsp = 0;
+    for (const Share & s : c->shares)
+    {
+        if (!s.company->counted_)
+        {
+            s.company->counted_ = true;
+            count_(s.company);
+        }
+        t += s.company->total_titles;
+        ts += s.company->total_shares;
+        tsp += s.percent
+               + s.percent / 100. * s.company->total_shares_percent;
+    }
+    c->total_titles += t;
+    c->total_shares += ts;
+    c->total_shares_percent = tsp;
+}
+
+
+
 
 void KekData::getSpringSystem(SpringSystem * sys)
 {
@@ -125,9 +201,11 @@ void KekData::getSpringSystem(SpringSystem * sys)
         {
             auto n2 = nodeForCompany(s.company);
 
-            float dist = 10. * (1. - s.percent/120.);
+            float dist = 3. + 10. * (1. - s.percent/100.);
 
             sys->connect(n1, n2, dist);
         }
     }
 }
+
+

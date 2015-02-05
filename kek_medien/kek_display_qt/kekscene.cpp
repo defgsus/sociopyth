@@ -1,8 +1,45 @@
 #include <QGraphicsEllipseItem>
 #include <QGraphicsLineItem>
+#include <QGraphicsSceneMouseEvent>
 
 #include "kekscene.h"
 
+
+class KekItem : public QGraphicsEllipseItem
+{
+public:
+
+    SpringSystem::Node * node;
+
+    KekItem(SpringSystem::Node * node, QGraphicsItem * parent = 0)
+        : QGraphicsEllipseItem(-.5, -.5, 1., 1., parent),
+          node(node)
+    {
+        setFlag(QGraphicsItem::ItemIsMovable);
+        //setFlag(QGraphicsItem::ItemSendsScenePositionChanges);
+
+        setBrush(QBrush(Qt::gray));
+        QPen pen(Qt::white);
+        pen.setWidthF(0.1);
+        setPen(pen);
+    }
+
+    //QVariant itemChange(GraphicsItemChange change, const QVariant &value)
+    void mouseMoveEvent(QGraphicsSceneMouseEvent * e)
+    {
+        QGraphicsEllipseItem::mouseMoveEvent(e);
+
+        // notify SpringSystem
+        if (e->buttons() & Qt::LeftButton)
+        {
+            // XXX not threadsafe
+            node->pos.setX(pos().x());
+            node->pos.setY(pos().y());
+            node->intertia = SpringSystem::vec2(0,0);
+            node->locked = true;
+        }
+    }
+};
 
 
 KekScene::KekScene(QObject *parent)
@@ -29,11 +66,7 @@ void KekScene::setSpringSystem(SpringSystem *s)
     {
         SpringSystem::Node * n = i.get();
 
-        auto e = new QGraphicsEllipseItem(-.5, -.5, 1., 1.);
-        e->setBrush(QBrush(Qt::gray));
-        QPen pen(Qt::white);
-        pen.setWidthF(0.1);
-        e->setPen(pen);
+        auto e = new KekItem(n);
 
         n->user = e;
 

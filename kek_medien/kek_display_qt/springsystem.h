@@ -15,6 +15,7 @@ public:
     struct Node
     {
         vec2 pos, intertia;
+        bool locked;
         void * user;
     };
 
@@ -46,10 +47,20 @@ public:
 
     void step(Float delta);
 
-    void relax(Float delta);
+    void relaxSprings(Float delta);
+    void relaxDistance(Float delta, Float min_dist);
     void applyIntertia(Float delta, Float damp);
 
+    // -------- threading ------------
+
+    void startThread();
+    /** Blocking until full stop */
+    void stopThread();
+
 private:
+
+    class Thread;
+    Thread * thread_;
 
     std::vector<std::shared_ptr<Node>> nodes_;
     std::vector<std::shared_ptr<Spring>> springs_;
