@@ -6,6 +6,7 @@
 #include <QTimer>
 
 #include "kekscene.h"
+#include "kekdata.h"
 
 class Thread;
 
@@ -28,6 +29,7 @@ private:
     void createWidgets_();
     void createSys_();
 
+    KekData kek_;
     SpringSystem * sys_;
     KekScene * scene_;
     QGraphicsView * view_;

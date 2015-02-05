@@ -2,7 +2,7 @@
 #include <QThread>
 
 #include "mainwindow.h"
-
+#include "kekdata.h"
 
 class Thread : public QThread
 {
@@ -43,6 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timer_, SIGNAL(timeout()), this, SLOT(updateView()));
 
     start();
+
 }
 
 MainWindow::~MainWindow()
@@ -75,8 +76,8 @@ void MainWindow::createSys_()
 {
     sys_->clear();
 
+#if 1
     std::vector<SpringSystem::Node*> nodes;
-
     for (int i=0; i<100; ++i)
     {
         nodes.push_back(
@@ -84,12 +85,17 @@ void MainWindow::createSys_()
                     );
     }
 
-    for (int i=0; i<100; ++i)
+    for (int i=0; i<300; ++i)
     {
         int n1 = rand() % nodes.size(),
             n2 = rand() % nodes.size();
-        sys_->connect(nodes[n1], nodes[n2], 5.);
+        if (n1 != n2)
+            sys_->connect(nodes[n1], nodes[n2], float(rand())/RAND_MAX * 30.);
     }
+#else
+    kek_.loadXml("../kek_owner.xml");
+    kek_.getSpringSystem(sys_);
+#endif
 
     scene_->setSpringSystem(sys_);
 

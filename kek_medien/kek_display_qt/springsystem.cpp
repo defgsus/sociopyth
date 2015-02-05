@@ -49,7 +49,7 @@ SpringSystem::Spring * SpringSystem::connect(Node * n1, Node * n2, Float rest_di
 void SpringSystem::step(Float delta)
 {
     relax(delta);
-    applyIntertia(delta, 0.01);
+    applyIntertia(delta, 0.5);
 }
 
 void SpringSystem::relax(Float delta)
