@@ -19,22 +19,42 @@ KekData::~KekData()
 
 void KekData::clear()
 {
+    compmap_.clear();
+    titlemap_.clear();
     companies_.clear();
+    titles_.clear();
 }
 
 KekData::Company * KekData::getCompany(const QString& name)
 {
-    auto i = companies_.find(name);
-    if (i != companies_.end())
+    auto i = compmap_.find(name);
+    if (i != compmap_.end())
         return i->second.get();
 
     auto c = new Company;
     c->name = name;
 
     auto p = std::shared_ptr<Company>(c);
-    companies_.insert(std::make_pair(name, p));
+    compmap_.insert(std::make_pair(name, p));
+    companies_.push_back(c);
 
     return c;
+}
+
+KekData::Title * KekData::getTitle(const QString& name)
+{
+    auto i = titlemap_.find(name);
+    if (i != titlemap_.end())
+        return i->second.get();
+
+    auto t = new Title;
+    t->name = name;
+
+    auto p = std::shared_ptr<Title>(t);
+    titlemap_.insert(std::make_pair(name, p));
+    titles_.push_back(t);
+
+    return t;
 }
 
 SpringSystem::Node * KekData::nodeForCompany(Company * c)
@@ -45,12 +65,20 @@ SpringSystem::Node * KekData::nodeForCompany(Company * c)
     return i->second;
 }
 
+SpringSystem::Node * KekData::nodeForTitle(Title * c)
+{
+    auto i = tnodemap_.find(c);
+    if (i == tnodemap_.end())
+        return 0;
+    return i->second;
+}
+
 QString KekData::toString() const
 {
     QString ret;
     QTextStream s(&ret);
 
-    for (auto const & i : companies_)
+    for (auto const & i : compmap_)
     {
         Company * c = i.second.get();
 
@@ -64,8 +92,8 @@ QString KekData::toString() const
         for (const Share & sh : c->shares)
             s << "  S: " << sh.percent << "% " << sh.company->name << "\n";
 
-        for (const Title & t : c->titles)
-            s << "  T: \"" << t.name << "\"\n";
+        for (const Title * t : c->titles)
+            s << "  T: \"" << t->name << "\"\n";
     }
 
     return ret;
@@ -93,7 +121,10 @@ bool KekData::loadXml(const QString &fn)
 
         auto c = getCompany(compname);
         c->url = n.attributes().namedItem("url").nodeValue();
-        qDebug() << c->name;
+        c->x = n.attributes().namedItem("x").nodeValue().toFloat();
+        c->y = n.attributes().namedItem("y").nodeValue().toFloat();
+        c->fixed = n.attributes().namedItem("fix").nodeValue().toInt();
+        //qDebug() << c->name;
 
         // titles
         auto childs = n.childNodes();
@@ -103,11 +134,15 @@ bool KekData::loadXml(const QString &fn)
 
             if (n.nodeName() == "title")
             {
-                Title t;
-                t.name = n.attributes().namedItem("name").nodeValue();
+                QString tname = n.attributes().namedItem("name").nodeValue();
+                //qDebug() << "--- t ---" << tname;
+                auto t = getTitle(tname);
+                t->x = n.attributes().namedItem("x").nodeValue().toFloat();
+                t->y = n.attributes().namedItem("y").nodeValue().toFloat();
+                t->fixed = n.attributes().namedItem("fix").nodeValue().toInt();
 
                 c->titles.push_back( t );
-                qDebug() << "--- t ---" << t.name;
+
             }
 
             if (n.nodeName() == "share")
@@ -117,7 +152,7 @@ bool KekData::loadXml(const QString &fn)
                 s.percent = n.attributes().namedItem("p").nodeValue().toFloat();
 
                 c->shares.push_back( s );
-                qDebug() << "--- s ---" << s.percent << s.company;
+                //qDebug() << "--- s ---" << s.percent << s.company;
             }
         }
 
@@ -130,11 +165,65 @@ bool KekData::loadXml(const QString &fn)
     return true;
 }
 
+bool KekData::saveXml(const QString &fn)
+{
+    QDomDocument dom;
+
+    auto kek = dom.createElement("kek");
+    dom.appendChild(kek);
+    auto comps = dom.createElement("companies");
+    kek.appendChild(comps);
+
+    for (auto const & i : compmap_)
+    {
+        Company * c = i.second.get();
+        auto * n = nodeForCompany(c);
+
+        auto comp = dom.createElement("company");
+        comps.appendChild(comp);
+
+        comp.setAttribute("name", c->name);
+        comp.setAttribute("url", c->url);
+        if (n)
+        {
+            comp.setAttribute("x", QString::number(n->pos.x()));
+            comp.setAttribute("y", QString::number(n->pos.y()));
+            comp.setAttribute("fix", QString::number(n->locked));
+        }
+
+        for (const Share & sh : c->shares)
+        {
+            auto share = dom.createElement("share");
+            comp.appendChild(share);
+            share.setAttribute("name", sh.company->name);
+            share.setAttribute("p", QString::number(sh.percent));
+        }
+
+        for (const Title * t : c->titles)
+        {
+            auto title = dom.createElement("title");
+            comp.appendChild(title);
+            title.setAttribute("name", t->name);
+        }
+
+    }
+
+    QFile f(fn);
+    if (!f.open(QFile::WriteOnly | QFile::Text))
+    {
+        qDebug() << "Could not write to" << fn;
+        return false;
+    }
+    QTextStream str(&f);
+    dom.save(str, 0);
+
+    return true;
+}
 
 
 void KekData::calcValues_()
 {
-    for (auto const & i : companies_)
+    for (auto const & i : compmap_)
     {
         Company * c = i.second.get();
         c->counted_ = false;
@@ -143,7 +232,7 @@ void KekData::calcValues_()
         c->total_shares_percent = 0;
     }
 
-    for (auto const & i : companies_)
+    for (auto const & i : compmap_)
     {
         Company * c = i.second.get();
 
@@ -181,27 +270,74 @@ void KekData::getSpringSystem(SpringSystem * sys)
     sys->clear();
 
     // create company nodes
-    for (auto const & i : companies_)
+    for (auto const & i : compmap_)
     {
         Company * c = i.second.get();
 
         auto node = sys->createNode();
-        node->pos.setX(100. * (.5+float(rand())/RAND_MAX));
-        node->pos.setY(100. * (.5+float(rand())/RAND_MAX));
+        node->pos.setX(c->x);
+        node->pos.setY(c->y);
+        node->locked = c->fixed;
+        if (c->x == 0 && c->y == 0)
+        {
+            node->pos.setX(4.*std::min(200., 20.0 * std::pow(1.*c->total_shares, 1./2.1)));
+            node->pos.setY(4.*std::min(200., 20.0 * std::pow(1.*c->total_titles, 1./2.)));
+            node->pos.setX(node->pos.x() + (.5-float(rand())/RAND_MAX));
+            node->pos.setY(node->pos.y() + (.5-float(rand())/RAND_MAX));
+            node->color = QColor(100, 100, 100);
+        }
+        //node->min_dist = std::max(3.,std::min(35., std::sqrt(c->total_shares) + c->shares.size() / 2. ));
+        node->min_dist = std::max(3.,std::min(35., std::sqrt(c->total_shares_percent) / 2.
+                                                    + c->shares.size() / 3.
+                                                    + c->titles.size() / 2.));
         nodemap_.insert(std::make_pair(c, node));
+
+        // create title nodes
+        for (Title * t : c->titles)
+        {
+            auto tnode = sys->createNode();
+            tnode->pos = node->pos;
+            tnode->locked = t->fixed;
+            tnode->color = QColor(150, 130, 90);
+            if (t->x == 0 && t->y == 0)
+            {
+                tnode->pos.setX(tnode->pos.x() + (.5-float(rand())/RAND_MAX));
+                tnode->pos.setY(tnode->pos.y() + (.5-float(rand())/RAND_MAX));
+            }
+            tnode->min_dist = node->min_dist;
+
+            tnodemap_.insert(std::make_pair(t, tnode));
+        }
+
     }
 
-    for (auto const & i : companies_)
+    // connections
+
+    for (auto const & i : compmap_)
     {
-        Company * c1 = i.second.get();
-        auto n1 = nodeForCompany(c1);
+        Company * c = i.second.get();
+        auto n1 = nodeForCompany(c);
 
         // connect shares
-        for (const Share & s : c1->shares)
+        for (const Share & s : c->shares)
         {
             auto n2 = nodeForCompany(s.company);
 
             float dist = 3. + 10. * (1. - s.percent/100.);
+
+            dist = std::max(dist, std::max(n1->min_dist, n2->min_dist));
+            //dist = std::max(dist, n1->min_dist + n2->min_dist);
+
+            auto spring = sys->connect(n1, n2, dist);
+            spring->stiff = 0.1 + 0.9 * s.percent / 100.;
+        }
+
+        // connect titles
+        for (Title * t : c->titles)
+        {
+            auto n2 = nodeForTitle(t);
+
+            float dist = std::max(n1->min_dist, n2->min_dist);
 
             sys->connect(n1, n2, dist);
         }

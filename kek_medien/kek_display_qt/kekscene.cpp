@@ -12,16 +12,23 @@ public:
     SpringSystem::Node * node;
 
     KekItem(SpringSystem::Node * node, QGraphicsItem * parent = 0)
-        : QGraphicsEllipseItem(-.5, -.5, 1., 1., parent),
+        : QGraphicsEllipseItem(parent),
           node(node)
     {
         setFlag(QGraphicsItem::ItemIsMovable);
         //setFlag(QGraphicsItem::ItemSendsScenePositionChanges);
 
-        setBrush(QBrush(Qt::gray));
-        QPen pen(Qt::white);
+        setBrush(QBrush(node->color));
+        QPen pen(node->color.lighter());
         pen.setWidthF(0.1);
         setPen(pen);
+
+        setRadius( std::max(1.,std::min(5., 0.4 * node->min_dist )) );
+    }
+
+    void setRadius(qreal r)
+    {
+        setRect(-r/2., -r/2., r, r);
     }
 
     //QVariant itemChange(GraphicsItemChange change, const QVariant &value)

@@ -16,7 +16,7 @@ public:
         stop = false;
         while (!stop)
         {
-            sys->step(0.001);
+            sys->step(0.01);
         }
     }
 
@@ -28,7 +28,8 @@ public:
 
 
 SpringSystem::SpringSystem()
-    : thread_       (0)
+    : thread_       (0),
+      frame_        (0)
 {
 
 }
@@ -53,6 +54,7 @@ SpringSystem::Node * SpringSystem::createNode(void *usr)
     n->user = usr;
     n->pos = vec2(Float(rnd()) / rnd.max() - .5, Float(rnd()) / rnd.max() - .5) * 10.;
     n->locked = false;
+    n->min_dist = 1;
 
     nodes_.push_back(std::shared_ptr<Node>(n));
     return n;
@@ -66,6 +68,7 @@ SpringSystem::Spring * SpringSystem::connect(Node * n1, Node * n2, Float rest_di
     s->rest_dist = rest_distance;
     s->dist = n1->pos.distanceToPoint(n2->pos);
     s->user = usr;
+    s->stiff = 1;
 
     springs_.push_back(std::shared_ptr<Spring>(s));
     return s;
@@ -93,9 +96,12 @@ void SpringSystem::stopThread()
 
 void SpringSystem::step(Float delta)
 {
-    //relaxDistance(delta/10., 3.);
+    if (frame_ % 50 == 0)
+        relaxDistance(delta);
     relaxSprings(delta);
-    applyIntertia(delta, 0.1);
+    applyIntertia(delta, 0.2);
+
+    ++frame_;
 }
 
 void SpringSystem::relaxSprings(Float delta)
@@ -109,7 +115,7 @@ void SpringSystem::relaxSprings(Float delta)
         s->dist = dir.length();
 
         // spring force
-        vec2 f = delta * .5 * (s->rest_dist - s->dist) * (dir / s->dist);
+        vec2 f = delta * .5 * s->stiff * std::max(Float(-10),std::min(Float(10), (s->rest_dist - s->dist) )) * (dir / s->dist);
         if (!s->n1->locked)
             s->n1->intertia -= f;
         if (!s->n2->locked)
@@ -117,10 +123,8 @@ void SpringSystem::relaxSprings(Float delta)
     }
 }
 
-void SpringSystem::relaxDistance(Float delta, Float min_dist)
+void SpringSystem::relaxDistance(Float delta)
 {
-    Float min_dist_s = min_dist * min_dist;
-
     for (uint i=0; i<nodes_.size(); ++i)
     {
         Node * n1 = nodes_[i].get();
@@ -129,13 +133,18 @@ void SpringSystem::relaxDistance(Float delta, Float min_dist)
         {
             Node * n2 = nodes_[j].get();
 
+            if (n1->locked && n2->locked)
+                continue;
+
+            Float mind = std::max(n1->min_dist, n2->min_dist);
+
             vec2 dir = n2->pos - n1->pos;
             Float ds = dir.lengthSquared();
 
-            if (ds < min_dist_s && ds > Float(0))
+            if (ds < mind*mind && ds > Float(0))
             {
                 Float d = std::sqrt(ds);
-                vec2 f = delta * .5 * (min_dist - d) * (dir / d);
+                vec2 f = delta * .5 * (mind - d) * (dir / d);
                 if (!n1->locked)
                     n1->intertia -= f;
                 if (!n2->locked)

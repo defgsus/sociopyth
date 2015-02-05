@@ -8,6 +8,9 @@
 #include "kekscene.h"
 #include "kekdata.h"
 
+class QTreeView;
+class KekModel;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -20,6 +23,9 @@ public slots:
 
     void start();
     void stop();
+    void load();
+    void save();
+
     void updateView();
 
 private:
@@ -28,9 +34,11 @@ private:
     void createSys_();
 
     KekData kek_;
+    KekModel * model_;
     SpringSystem * sys_;
     KekScene * scene_;
     QGraphicsView * view_;
+    QTreeView * list_;
     QTimer * timer_;
 };
 
