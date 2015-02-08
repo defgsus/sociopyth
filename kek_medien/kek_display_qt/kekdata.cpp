@@ -23,6 +23,9 @@ void KekData::clear()
     titlemap_.clear();
     companies_.clear();
     titles_.clear();
+    cnodemap_.clear();
+    nodecmap_.clear();
+    tnodemap_.clear();
 }
 
 KekData::Company * KekData::getCompany(const QString& name)
@@ -59,10 +62,26 @@ KekData::Title * KekData::getTitle(const QString& name)
 
 SpringSystem::Node * KekData::nodeForCompany(Company * c)
 {
-    auto i = nodemap_.find(c);
-    if (i == nodemap_.end())
+    auto i = cnodemap_.find(c);
+    if (i == cnodemap_.end())
         return 0;
     return i->second;
+}
+
+KekData::Company * KekData::companyForNode(SpringSystem::Node * n)
+{
+    auto i = nodecmap_.find(n);
+    if (i == nodecmap_.end())
+        return 0;
+    return i->second;
+}
+
+int KekData::index(Company * c) const
+{
+    for (uint i=0; i<companies_.size(); ++i)
+        if (companies_[i] == c)
+            return i;
+    return -1;
 }
 
 SpringSystem::Node * KekData::nodeForTitle(Title * c)
@@ -278,19 +297,21 @@ void KekData::getSpringSystem(SpringSystem * sys)
         node->pos.setX(c->x);
         node->pos.setY(c->y);
         node->locked = c->fixed;
+        node->color = QColor(100, 100, 100);
         if (c->x == 0 && c->y == 0)
         {
-            node->pos.setX(4.*std::min(200., 20.0 * std::pow(1.*c->total_shares, 1./2.1)));
-            node->pos.setY(4.*std::min(200., 20.0 * std::pow(1.*c->total_titles, 1./2.)));
+            node->pos.setX(4.*      std::min(200., 20.0 * std::pow(1.*c->total_shares, 1./1.5)));
+            node->pos.setY(4.*(200.-std::min(200., 20.0 * std::pow(1.*c->total_titles, 1./1.5))));
             node->pos.setX(node->pos.x() + (.5-float(rand())/RAND_MAX));
             node->pos.setY(node->pos.y() + (.5-float(rand())/RAND_MAX));
-            node->color = QColor(100, 100, 100);
         }
         //node->min_dist = std::max(3.,std::min(35., std::sqrt(c->total_shares) + c->shares.size() / 2. ));
-        node->min_dist = std::max(3.,std::min(35., std::sqrt(c->total_shares_percent) / 2.
+        node->min_dist = std::max(3.,std::min(35.,  std::sqrt(c->total_shares_percent) / 2.
+                                                    + 5.
                                                     + c->shares.size() / 3.
                                                     + c->titles.size() / 2.));
-        nodemap_.insert(std::make_pair(c, node));
+        cnodemap_.insert(std::make_pair(c, node));
+        nodecmap_.insert(std::make_pair(node, c));
 
         // create title nodes
         for (Title * t : c->titles)

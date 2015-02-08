@@ -26,12 +26,21 @@ public:
         setRadius( std::max(1.,std::min(5., 0.4 * node->min_dist )) );
     }
 
-    void setRadius(qreal r)
+    void setRadius(qreal r) { setRect(-r/2., -r/2., r, r); }
+
+
+    //QVariant itemChange(GraphicsItemChange change, const QVariant &value);
+
+    void mousePressEvent(QGraphicsSceneMouseEvent * e)
     {
-        setRect(-r/2., -r/2., r, r);
+        QGraphicsEllipseItem::mousePressEvent(e);
+        if (e->button() == Qt::LeftButton)
+        if (auto kek = qobject_cast<KekScene*>(scene()))
+        {
+            emit kek->nodeSelected(node);
+        }
     }
 
-    //QVariant itemChange(GraphicsItemChange change, const QVariant &value)
     void mouseMoveEvent(QGraphicsSceneMouseEvent * e)
     {
         QGraphicsEllipseItem::mouseMoveEvent(e);
@@ -44,6 +53,15 @@ public:
             node->pos.setY(pos().y());
             node->intertia = SpringSystem::vec2(0,0);
             node->locked = true;
+        }
+    }
+
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent * e)
+    {
+        QGraphicsEllipseItem::mouseReleaseEvent(e);
+        if (e->button() == Qt::RightButton)
+        {
+            node->locked = false;
         }
     }
 };
@@ -86,7 +104,7 @@ void KekScene::setSpringSystem(SpringSystem *s)
 
         auto e = new QGraphicsLineItem();
         QPen pen(Qt::green);
-        pen.setWidthF(0.1);
+        pen.setWidthF(s->stiff);
         e->setPen(pen);
 
         s->user = e;
@@ -110,12 +128,12 @@ void KekScene::updatePositions()
 
     for (auto & i : sys_->springs())
     {
-        SpringSystem::Spring * n = i.get();
+        SpringSystem::Spring * s = i.get();
 
-        auto e = static_cast<QGraphicsLineItem*>(n->user);
+        auto e = static_cast<QGraphicsLineItem*>(s->user);
 
-        e->setLine(n->n1->pos.x(), n->n1->pos.y(),
-                   n->n2->pos.x(), n->n2->pos.y());
+        e->setLine(s->n1->pos.x(), s->n1->pos.y(),
+                   s->n2->pos.x(), s->n2->pos.y());
     }
 
     update();

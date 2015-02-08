@@ -14,12 +14,19 @@ import xml.etree.ElementTree as ET
 class Company:
 	name = ""
 	url = ""
+	address = ""
+	remarks = ""
 	shares = {}		# dict of unicode/Share
 	titles = set()	# set of unicode
 
 class Share:
 	name = ""
 	percent = 0.0
+
+class Title:
+	name = ""
+	url = ""
+	mtype = "" 		# media type
 
 
 
@@ -69,23 +76,23 @@ def download(url, local_name):
 	return True
 	
 
+################### media/title index #########################
 
-def kek_get_index():
+def kek_get_media_index():
 	"""Downloads the index page of the Mediendatenbank,
-	listing all media.
+	listing all media titles.
 	Returns False or True."""
 
 	url = base_url + "no_cache/information/mediendatenbank.html?L=0"
 	
 	medien_index_url = url + "%23&mt=1,2,3,4&s=&f=0&pq=1"
 	
-	if download(medien_index_url, "./html/index.html") == False: return False
+	if download(medien_index_url, "./html/media_index.html") == False: return False
 		
 	return True
 
 
-
-def kek_scan_index(local_name):
+def kek_scan_media_index(local_name):
 	"""Scans the index-by-media html file from kek-online.de
 	and returns a dictionary with media-name/url pairs if succesful,
 	False otherwise"""
@@ -148,20 +155,108 @@ def kek_download_media(medien):
 	return True
 
 
+
+
+################### company/owner index #########################
+
+def kek_get_company_index():
+	"""Downloads the index page of the Mediendatenbank,
+	listing all media titles.
+	Returns False or True."""
+
+	url = base_url + "no_cache/information/mediendatenbank.html?L=0"
+	
+	medien_index_url = url + "&mt=1,2,3&s=&searchCompanies=1&f=0&pq=1"
+	
+	if download(medien_index_url, "./html/company_index.html") == False: return False
+		
+	return True
+
+
+def kek_scan_company_index(local_name):
+	"""Scans the index-by-company html file from kek-online.de
+	and returns a dictionary with company-name/url pairs if succesful,
+	False otherwise"""
+	
+	try:
+		f = open(local_name, 'rt')
+	except IOError:
+		print "ERROR opening " + local_name
+		return False
+	
+	text = f.read()
+	
+	# beginning of table
+	i = text.find('<table class="media-detail')
+	if i < 0 : 
+		print "ERROR company index table not found in " + local_name
+		return False
+
+	companies = {}
+	soup = BeautifulSoup(text[i:])
+
+	# get each media owner
+	# The td classes are not very helpful, but
+	# by cutting the text above to the company-table
+	# and assuming there are no other td's down the page
+	# (which is the case on Feb/2015) we can just read them all
+	for td in soup.find_all("td"):
+		for a in td.find_all("a"):
+			#print a.get("href") + " " + a.text
+			comp = a.text.encode('UTF-8')
+			comp_url = a.get("href").encode('UTF-8') 
+			companies[comp] = comp_url
+	
+	f.close();
+	
+	print "found " + str(len(companies)) + " companies"
+	return companies
+
+
+def kek_company_filename(company_url):
+	"""Returns a safe local filename from the company url,
+	or False if the url is messed-up."""
+
+	# scan for the database index to get a good filename
+	i = company_url.find("&c=")
+	j = company_url[i+3:].find("&")
+	if i < 0 or j < 0: 
+		print "Can't determine index from url " + company_url
+		return False
+	i += 3
+	return "./html/company_" + company_url[i:i+j] + ".html"
+
+def kek_download_companies(companies):
+	"""Downloads all the urls in the dictionary's values."""
+
+	print "downloading all company htmls"
+
+	for i in companies.values():
+		local_name = kek_company_filename(i)
+		if i == False: continue
+		if download(i, local_name) == False: continue
+	
+	return True
+
+
 ################### xml ####################
 
 
-def kek_write_company_xml(companies, filename):
-	"""Writes the contents of companies to an xml file.
-	companies must be a dict of unicode/Company."""
+def kek_write_xml(companies, titles, filename):
+	"""Writes the contents of companies and titles to an xml file.
+	companies must be a dict of unicode/Company.
+	titles must be a dict of unicode/Title."""
 	
 	root = ET.Element("kek")
+	
+	# create company nodes
 	comps = ET.SubElement(root, "companies")
-
 	for c in companies.values():
 		comp = ET.SubElement(comps, "company")
 		comp.set("name", c.name)
 		comp.set("url", c.url)
+		comp.set("address", c.address)
+		comp.set("remarks", c.remarks)
 		for m in c.titles:
 			title = ET.SubElement(comp, "title")
 			title.set("name", m)
@@ -169,6 +264,14 @@ def kek_write_company_xml(companies, filename):
 			share = ET.SubElement(comp, "share")
 			share.set("p", s.percent);
 			share.set("name", s.name);
+			
+	# create title nodes
+	tits = ET.SubElement(root, "titles")
+	for c in titles.values():
+		t = ET.SubElement(tits, "title-desc")
+		t.set("name", c.name)
+		t.set("url", c.url)
+		t.set("type", c.mtype)
 
 	# store
 	tree = ET.ElementTree(root)
@@ -177,12 +280,13 @@ def kek_write_company_xml(companies, filename):
 	ET.dump(root);
 
 
-def kek_read_company_xml(filename):
-	"""Reads the contents of a company xml file.
-	Returns a dict of unicode/Company. 
-	No error checking here - i trust myself.."""
+def kek_read_xml(filename):
+	"""Reads the contents of the kek data xml file.
+	Returns a dict of unicode/Company and unicode/Title. 
+	No error checking here - i must trust myself.."""
 	
-	ret = {}	
+	ret_comp = {}	
+	ret_title = {}
 	
 	tree = ET.parse(filename)
 	root = tree.getroot()
@@ -197,6 +301,8 @@ def kek_read_company_xml(filename):
 		c = Company()
 		c.name = attr["name"]
 		c.url = attr["url"]
+		c.address = attr["address"]
+		c.remarks = attr["remarks"]
 		c.titles = set()
 		c.shares = {}
 		
@@ -212,6 +318,20 @@ def kek_read_company_xml(filename):
 			c.shares[s.name] = s
 		
 		# store in dict
-		ret[c.name] = c
+		ret_comp[c.name] = c
+
+	# go through all title tags
+	for tit in root.iter("title-desc"):
 		
-	return ret
+		# get a key/value dict with all attributes
+		attr = tit.attrib
+		
+		# create the runtime structure
+		t = Title()
+		t.name = attr["name"]
+		t.url = attr["url"]
+		t.mtype = attr["type"]
+		
+		ret_title[t.name] = t;
+		
+	return ret_comp, ret_title

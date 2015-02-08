@@ -21,11 +21,11 @@ class KekModel : public QAbstractItemModel
 public:
     explicit KekModel(KekData *, QObject *parent = 0);
 
-//    QObject * itemForIndex(const QModelIndex& index) const;
+    //QObject * indexForCompany(const QModelIndex& index) const;
 
     // --- interface impl. ---
 
-    virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
+    virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
     virtual QModelIndex parent(const QModelIndex &index) const;
     virtual int rowCount(const QModelIndex &parent) const;
     virtual int columnCount(const QModelIndex &parent) const;

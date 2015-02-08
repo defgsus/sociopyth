@@ -4,6 +4,9 @@
 #include <QSortFilterProxyModel>
 #include <QMenu>
 #include <QMenuBar>
+#include <QScrollBar>
+#include <QDebug>
+#include <QGraphicsItem>
 
 #include "mainwindow.h"
 #include "kekdata.h"
@@ -15,6 +18,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow   (parent)
     , model_        (0)
+    , fmodel_       (0)
     , scene_        (0)
 {
     setMinimumSize(512, 512);
@@ -31,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(timer_, SIGNAL(timeout()), this, SLOT(updateView()));
 
 //    start();
+
+    updateView();
 
 }
 
@@ -53,16 +59,23 @@ void MainWindow::createWidgets_()
         list_ = new QTreeView(w);
         lh->addWidget(list_, 1);
         list_->setSortingEnabled(true);
-
+        connect(list_, SIGNAL(clicked(QModelIndex)),
+                this, SLOT(onCompanySelected_(QModelIndex)));
 
         view_ = new QGraphicsView(w);
         lh->addWidget(view_, 2);
 
+        sbScale_ = new QScrollBar(Qt::Vertical, this);
+        lh->addWidget(sbScale_);
+        sbScale_->setRange(1., 12. * 1000.);
+        sbScale_->setValue(1. * 1000.);
 
     scene_ = new KekScene(w);
+    connect(scene_, SIGNAL(nodeSelected(SpringSystem::Node*)),
+            this, SLOT(onNodeSelected_(SpringSystem::Node*)));
+
     view_->setScene(scene_);
     view_->setBackgroundBrush(QBrush(Qt::black));
-
 
     QMenu * main = new QMenu(this);
     menuBar()->addMenu(main);
@@ -105,15 +118,18 @@ void MainWindow::createSys_()
             sys_->connect(nodes[n1], nodes[n2], float(rand())/RAND_MAX * 30.);
     }
 #else
-    kek_.loadXml("../kek_owner.xml");
+    //kek_.loadXml("../kek_owner.xml");
+    //kek_.loadXml("../kek_edit.xml");
+    kek_.loadXml("../kek_data.xml");
     kek_.getSpringSystem(sys_);
 #endif
 
+    delete fmodel_;
     delete model_;
     model_ = new KekModel(&kek_);
-    auto sfm = new QSortFilterProxyModel(this);
-    sfm->setSourceModel(model_);
-    list_->setModel(sfm);
+    fmodel_ = new QSortFilterProxyModel;
+    fmodel_->setSourceModel(model_);
+    list_->setModel(fmodel_);
 
     scene_->setSpringSystem(sys_);
 }
@@ -145,6 +161,29 @@ void MainWindow::updateView()
 {
     scene_->updatePositions();
     QTransform t;
-    t.scale(6., 6.);
+    qreal s = 0.2 + qreal(sbScale_->value()) / 1000.;
+    t.scale(s, s);
     view_->setTransform(t);
+}
+
+void MainWindow::onNodeSelected_(SpringSystem::Node * n)
+{
+    if (auto c = kek_.companyForNode(n))
+    {
+        int idx = kek_.index(c);
+        list_->setCurrentIndex(fmodel_->mapFromSource(model_->index(idx,0)));
+    }
+}
+
+void MainWindow::onCompanySelected_(const QModelIndex & idx)
+{
+    int row = fmodel_->mapToSource(idx).row();
+    if (row < 0 || row >= (int)kek_.companies().size())
+        return;
+    auto c = kek_.companies()[row];
+    auto n = kek_.nodeForCompany(c);
+    QGraphicsItem * it = (QGraphicsItem*)n->user;
+    auto r = it->boundingRect();
+    r.moveTo(it->scenePos());
+    view_->ensureVisible(r);
 }

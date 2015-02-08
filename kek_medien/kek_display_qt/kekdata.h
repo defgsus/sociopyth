@@ -71,6 +71,8 @@ public:
     /** Returns the associated springsys node, or NULL */
     SpringSystem::Node * nodeForCompany(Company *);
     SpringSystem::Node * nodeForTitle(Title *);
+    Company * companyForNode(SpringSystem::Node*);
+    int index(Company *) const;
 
     void getSpringSystem(SpringSystem *);
 
@@ -81,8 +83,9 @@ private:
 
     std::map<QString, std::shared_ptr<Company>> compmap_;
     std::map<QString, std::shared_ptr<Title>> titlemap_;
-    std::map<Company*, SpringSystem::Node*> nodemap_;
+    std::map<Company*, SpringSystem::Node*> cnodemap_;
     std::map<Title*, SpringSystem::Node*> tnodemap_;
+    std::map<SpringSystem::Node*, Company*> nodecmap_;
 
     // for linear access
     std::vector<Company*> companies_;

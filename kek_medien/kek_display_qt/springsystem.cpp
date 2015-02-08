@@ -137,6 +137,7 @@ void SpringSystem::relaxDistance(Float delta)
                 continue;
 
             Float mind = std::max(n1->min_dist, n2->min_dist);
+            mind = std::max(mind, 10.f);
 
             vec2 dir = n2->pos - n1->pos;
             Float ds = dir.lengthSquared();
