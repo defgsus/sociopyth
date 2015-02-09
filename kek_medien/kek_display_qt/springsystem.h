@@ -7,6 +7,9 @@
 #include <QVector2D>
 #include <QColor>
 
+
+/** A very generic spring system.
+    Not per-se related to the KEK data. */
 class SpringSystem
 {
 public:
@@ -48,8 +51,14 @@ public:
     const std::vector<std::shared_ptr<Node>> & nodes() const { return nodes_; }
     const std::vector<std::shared_ptr<Spring>> & springs() const { return springs_; }
 
+    // -------- properties -----------
+
+    void setDelta(Float s) { delta_ = s; }
+    void setStiffness(Float s) { stiffness_ = s; }
+
     // --------- physics -------------
 
+    void step() { step(delta_); }
     void step(Float delta);
 
     void relaxSprings(Float delta);
@@ -57,6 +66,8 @@ public:
     void applyIntertia(Float delta, Float damp);
 
     // -------- threading ------------
+
+    bool isRunning() const;
 
     void startThread();
     /** Blocking until full stop */
@@ -71,6 +82,7 @@ private:
     std::vector<std::shared_ptr<Spring>> springs_;
 
     int frame_;
+    Float stiffness_, delta_;
 };
 
 #endif // SPRINGSYSTEM_H

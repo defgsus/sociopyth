@@ -15,6 +15,7 @@ public:
 signals:
 
     void nodeSelected(SpringSystem::Node *);
+    void nodeChanged(SpringSystem::Node *);
 
 public slots:
 

@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <QGraphicsView>
-#include <QTimer>
 
 #include "kekscene.h"
 #include "kekdata.h"
@@ -13,6 +12,8 @@ class QTreeView;
 class QScrollBar;
 class QSortFilterProxyModel;
 class KekModel;
+class CompanyView;
+class KekView;
 
 class MainWindow : public QMainWindow
 {
@@ -24,31 +25,26 @@ public:
 
 public slots:
 
-    void start();
-    void stop();
     void load();
     void save();
 
-    void updateView();
-
 private slots:
 
-    void onNodeSelected_(SpringSystem::Node *);
+    void onCompanyClicked_(KekData::Company*);
     void onCompanySelected_(const QModelIndex&);
 private:
 
     void createWidgets_();
-    void createSys_();
+    QDockWidget * createDock_(QWidget * w, const QString& title, Qt::DockWidgetArea area = Qt::LeftDockWidgetArea);
+    //void createSys_();
 
     KekData kek_;
     KekModel * model_;
     QSortFilterProxyModel * fmodel_;
-    SpringSystem * sys_;
-    KekScene * scene_;
-    QGraphicsView * view_;
+
+    CompanyView * compView_;
     QTreeView * list_;
-    QTimer * timer_;
-    QScrollBar * sbScale_;
+    KekView * kekView_;
 };
 
 #endif // MAINWINDOW_H

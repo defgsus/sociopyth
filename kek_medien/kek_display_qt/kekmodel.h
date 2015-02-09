@@ -15,6 +15,7 @@
 
 class KekData;
 
+/** List model to display all companies */
 class KekModel : public QAbstractItemModel
 {
     Q_OBJECT

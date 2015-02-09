@@ -16,6 +16,12 @@ KekData::~KekData()
 
 }
 
+QString KekData::fullUrl(const QString &url)
+{
+    static const QString base_url = "http://kek-online.de/";
+    return url.startsWith(base_url)
+            ? base_url : (base_url + url);
+}
 
 void KekData::clear()
 {
@@ -125,6 +131,8 @@ bool KekData::loadXml(const QString &fn)
     if (!f.open(QFile::ReadOnly | QFile::Text))
         return false;
 
+    clear();
+
     QDomDocument dom;
 
     if (!dom.setContent(&f))
@@ -137,13 +145,17 @@ bool KekData::loadXml(const QString &fn)
         auto n = nodes.item(i);
 
         QString compname = n.attributes().namedItem("name").nodeValue();
+        //qDebug() << compname;
 
         auto c = getCompany(compname);
         c->url = n.attributes().namedItem("url").nodeValue();
+        c->address = n.attributes().namedItem("address").nodeValue();
+        c->remarks = n.attributes().namedItem("remarks").nodeValue();
         c->x = n.attributes().namedItem("x").nodeValue().toFloat();
         c->y = n.attributes().namedItem("y").nodeValue().toFloat();
         c->fixed = n.attributes().namedItem("fix").nodeValue().toInt();
-        //qDebug() << c->name;
+        c->address.replace("\n", " | ");
+        c->address = c->address.simplified();
 
         // titles
         auto childs = n.childNodes();
@@ -156,12 +168,8 @@ bool KekData::loadXml(const QString &fn)
                 QString tname = n.attributes().namedItem("name").nodeValue();
                 //qDebug() << "--- t ---" << tname;
                 auto t = getTitle(tname);
-                t->x = n.attributes().namedItem("x").nodeValue().toFloat();
-                t->y = n.attributes().namedItem("y").nodeValue().toFloat();
-                t->fixed = n.attributes().namedItem("fix").nodeValue().toInt();
 
                 c->titles.push_back( t );
-
             }
 
             if (n.nodeName() == "share")
@@ -174,12 +182,29 @@ bool KekData::loadXml(const QString &fn)
                 //qDebug() << "--- s ---" << s.percent << s.company;
             }
         }
+    }
 
+    nodes = dom.elementsByTagName("title-desc");
+
+    for (int i=0; i<nodes.length(); ++i)
+    {
+        auto n = nodes.item(i);
+
+        QString name = n.attributes().namedItem("name").nodeValue();
+        auto t = getTitle(name);
+
+        t->url = n.attributes().namedItem("url").nodeValue();
+        t->type = n.attributes().namedItem("type").nodeValue();
+        t->x = n.attributes().namedItem("x").nodeValue().toFloat();
+        t->y = n.attributes().namedItem("y").nodeValue().toFloat();
+        t->fixed = n.attributes().namedItem("fix").nodeValue().toInt();
     }
 
     calcValues_();
 
+#ifdef QT_DEBUG
     qDebug() << toString();
+#endif
 
     return true;
 }
@@ -190,6 +215,9 @@ bool KekData::saveXml(const QString &fn)
 
     auto kek = dom.createElement("kek");
     dom.appendChild(kek);
+
+    // --- companies ---
+
     auto comps = dom.createElement("companies");
     kek.appendChild(comps);
 
@@ -203,11 +231,14 @@ bool KekData::saveXml(const QString &fn)
 
         comp.setAttribute("name", c->name);
         comp.setAttribute("url", c->url);
+        comp.setAttribute("address", c->address);
+        comp.setAttribute("remarks", c->remarks);
         if (n)
         {
             comp.setAttribute("x", QString::number(n->pos.x()));
             comp.setAttribute("y", QString::number(n->pos.y()));
-            comp.setAttribute("fix", QString::number(n->locked));
+            if (n->locked)
+                comp.setAttribute("fix", "1");
         }
 
         for (const Share & sh : c->shares)
@@ -224,7 +255,29 @@ bool KekData::saveXml(const QString &fn)
             comp.appendChild(title);
             title.setAttribute("name", t->name);
         }
+    }
 
+    // --- titles ---
+    auto tits = dom.createElement("titles");
+    kek.appendChild(tits);
+    for (auto const & i : titlemap_)
+    {
+        Title * t = i.second.get();
+        auto * n = nodeForTitle(t);
+
+        auto tdesc = dom.createElement("title-desc");
+        tits.appendChild(tdesc);
+
+        tdesc.setAttribute("name", t->name);
+        tdesc.setAttribute("url", t->url);
+        tdesc.setAttribute("type", t->type);
+        if (n)
+        {
+            tdesc.setAttribute("x", QString::number(n->pos.x()));
+            tdesc.setAttribute("y", QString::number(n->pos.y()));
+            if (n->locked)
+                tdesc.setAttribute("fix", "1");
+        }
     }
 
     QFile f(fn);

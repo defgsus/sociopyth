@@ -8,7 +8,11 @@ this prog creates an xml from the htmls.
 
 from bs4 import BeautifulSoup, Tag
 import xml.etree.ElementTree as ET
-from kek_tools import kek_scan_media_index, kek_scan_company_index, kek_media_filename, kek_company_filename, kek_write_xml, Company, Share, Title
+from kek_tools import download, kek_scan_media_index, kek_scan_company_index, kek_media_filename, kek_company_filename, kek_write_xml, Company, Share, Title
+
+# If an html is not found, download it
+# (Some htmls have not been listed in the index files, pew...)
+do_download = True
 
 num_errors = 0
 
@@ -57,7 +61,7 @@ def kek_parse_shares(shares_ul, owner, debug_prefix = ""):
 			percent = "0"
 		
 		# gotit
-		print debug_prefix + percent + "% " + owned_by
+		#print debug_prefix + percent + "% " + owned_by
 		
 		# save shares (owner is owned by owned_by)
 		c = companies[owned_by]
@@ -89,9 +93,18 @@ def kek_parse_media(media_url, local_name):
 	try:
 		f = open(local_name, 'rt')
 	except IOError:
-		#print "ERROR opening " + local_name
-		return False
-	
+		if do_download == False:
+			print "ERROR opening " + local_name
+			return False
+		else:
+			if download(media_url, local_name) == False:
+				return False
+			try:
+				f = open(local_name, 'rt')
+			except IOError:
+				print "ERROR opening " + local_name
+				return False
+					
 	print "\nparsing " + local_name
 
 	text = f.read()
@@ -128,7 +141,7 @@ def kek_parse_media(media_url, local_name):
 	m_type = m_type.strip();
 
 	# got that :)
-	print m_name + ", " + m_type + ", " + m_owner + ", " + m_owner_url
+	#print m_name + ", " + m_type + ", " + m_owner + ", " + m_owner_url
 
 	# store the media/title info
 	if not titles.has_key(m_name):
@@ -173,8 +186,18 @@ def kek_parse_company(company_url, local_name):
 	try:
 		f = open(local_name, 'rt')
 	except IOError:
-		print "ERROR opening " + local_name
-		return False
+		if do_download == False:
+			print "ERROR opening " + local_name
+			return False
+		else:
+			if download(company_url, local_name) == False:
+				return False
+			try:
+				f = open(local_name, 'rt')
+			except IOError:
+				print "ERROR opening " + local_name
+				return False
+				
 	
 	print "\nparsing " + local_name
 
@@ -203,7 +226,7 @@ def kek_parse_company(company_url, local_name):
 					m_remarks = tag.text[13:].strip()
 	
 	# got this :)
-	print "[" + m_name + "]\n[" + m_address + "]\n[" + m_remarks + "]"
+	#print "[" + m_name + "]\n[" + m_address + "]\n[" + m_remarks + "]"
 
 	# store the company info
 	if not companies.has_key(m_name):
@@ -234,12 +257,10 @@ def kek_parse_company(company_url, local_name):
 
 ########################################################################
 
+# some tests
+if 1 == 0:
 
-# scan the index file for all company urls
-comps = kek_scan_company_index("./html/company_index.html")
-
-# parse each downloaded company html
-for i in comps.values():
+	i = "http://www.kek-online.de/no_cache/information/mediendatenbank.html?L=0&&c=4228&"
 	#i = "http://www.kek-online.de/no_cache/information/mediendatenbank.html?L=0%23&c=192&mt=-1&s=RTL&f=0"
 	#i = "http://www.kek-online.de/no_cache/information/mediendatenbank.html?L=0%23&&c=3847&"
 	#i = "http://www.kek-online.de/no_cache/information/mediendatenbank.html?L=0%23&&c=200&"
@@ -251,21 +272,36 @@ for i in comps.values():
 	else:
 		if kek_parse_company(i, local_name) == False:
 			num_errors += 1
+				
+# actual parsing
+if 1 == 1:
 
+	# scan the index file for all company urls
+	comps = kek_scan_company_index("./html/company_index.html")
 
-# scan the index file for all media titles
-medien = kek_scan_media_index("./html/media_index.html")
-
-# parse each downloaded media file
-for i in medien.values():
-	local_name = kek_media_filename(i)
-	if local_name == False:
-		num_errors += 1
-	else:
-		if kek_parse_media(i, local_name) == False:
+	# parse each downloaded company html
+	for i in comps.values():
+		local_name = kek_company_filename(i)
+		if local_name == False:
 			num_errors += 1
+		else:
+			if kek_parse_company(i, local_name) == False:
+				num_errors += 1
 
-kek_write_xml(companies, titles, "./kek_data.xml")
+
+	# scan the index file for all media titles
+	medien = kek_scan_media_index("./html/media_index.html")
+
+	# parse each downloaded media file
+	for i in medien.values():
+		local_name = kek_media_filename(i)
+		if local_name == False:
+			num_errors += 1
+		else:
+			if kek_parse_media(i, local_name) == False:
+				num_errors += 1
+
+	kek_write_xml(companies, titles, "./kek_data.xml")
 
 
 

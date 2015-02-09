@@ -22,6 +22,9 @@ KekModel::KekModel(KekData * kek, QObject *parent) :
             << "total titles"
             << "total shares"
             << "%"
+            << "address"
+            << "remarks"
+            << "url"
     ;
 }
 
@@ -72,6 +75,9 @@ QVariant KekModel::data(const QModelIndex &index, int role) const
             case 3: return kek_->companies()[row]->total_titles;
             case 4: return kek_->companies()[row]->total_shares;
             case 5: return kek_->companies()[row]->total_shares_percent;
+            case 6: return kek_->companies()[row]->address;
+            case 7: return kek_->companies()[row]->remarks;
+            case 8: return kek_->companies()[row]->url;
             default: return "-";
         }
     }

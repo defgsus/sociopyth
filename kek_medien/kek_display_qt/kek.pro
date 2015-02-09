@@ -18,10 +18,14 @@ SOURCES += main.cpp\
     springsystem.cpp \
     kekscene.cpp \
     kekdata.cpp \
-    kekmodel.cpp
+    kekmodel.cpp \
+    companyview.cpp \
+    kekview.cpp
 
 HEADERS  += mainwindow.h \
     springsystem.h \
     kekscene.h \
     kekdata.h \
-    kekmodel.h
+    kekmodel.h \
+    companyview.h \
+    kekview.h

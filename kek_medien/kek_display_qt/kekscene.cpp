@@ -9,11 +9,13 @@ class KekItem : public QGraphicsEllipseItem
 {
 public:
 
+    KekScene * scene;
     SpringSystem::Node * node;
 
-    KekItem(SpringSystem::Node * node, QGraphicsItem * parent = 0)
-        : QGraphicsEllipseItem(parent),
-          node(node)
+    KekItem(KekScene * scene, SpringSystem::Node * node, QGraphicsItem * parent = 0)
+        : QGraphicsEllipseItem  (parent)
+        , scene                 (scene)
+        , node                  (node)
     {
         setFlag(QGraphicsItem::ItemIsMovable);
         //setFlag(QGraphicsItem::ItemSendsScenePositionChanges);
@@ -35,10 +37,7 @@ public:
     {
         QGraphicsEllipseItem::mousePressEvent(e);
         if (e->button() == Qt::LeftButton)
-        if (auto kek = qobject_cast<KekScene*>(scene()))
-        {
-            emit kek->nodeSelected(node);
-        }
+        emit scene->nodeSelected(node);
     }
 
     void mouseMoveEvent(QGraphicsSceneMouseEvent * e)
@@ -53,6 +52,7 @@ public:
             node->pos.setY(pos().y());
             node->intertia = SpringSystem::vec2(0,0);
             node->locked = true;
+            emit scene->nodeChanged(node);
         }
     }
 
@@ -91,7 +91,7 @@ void KekScene::setSpringSystem(SpringSystem *s)
     {
         SpringSystem::Node * n = i.get();
 
-        auto e = new KekItem(n);
+        auto e = new KekItem(this, n);
 
         n->user = e;
 
@@ -106,6 +106,7 @@ void KekScene::setSpringSystem(SpringSystem *s)
         QPen pen(Qt::green);
         pen.setWidthF(s->stiff);
         e->setPen(pen);
+        e->setZValue(-1);
 
         s->user = e;
 

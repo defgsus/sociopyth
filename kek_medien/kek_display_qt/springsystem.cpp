@@ -16,7 +16,7 @@ public:
         stop = false;
         while (!stop)
         {
-            sys->step(0.01);
+            sys->step();
         }
     }
 
@@ -29,7 +29,9 @@ public:
 
 SpringSystem::SpringSystem()
     : thread_       (0),
-      frame_        (0)
+      frame_        (0),
+      stiffness_    (1.),
+      delta_        (0.02)
 {
 
 }
@@ -93,6 +95,11 @@ void SpringSystem::stopThread()
     }
 }
 
+bool SpringSystem::isRunning() const
+{
+    return thread_ && thread_->isRunning();
+}
+
 
 void SpringSystem::step(Float delta)
 {
@@ -115,7 +122,8 @@ void SpringSystem::relaxSprings(Float delta)
         s->dist = dir.length();
 
         // spring force
-        vec2 f = delta * .5 * s->stiff * std::max(Float(-10),std::min(Float(10), (s->rest_dist - s->dist) )) * (dir / s->dist);
+        vec2 f = std::max(Float(-.1),std::min(Float(.1), Float(.5) * delta * stiffness_ * s->stiff * (s->rest_dist - s->dist)))
+                    * (dir / s->dist);
         if (!s->n1->locked)
             s->n1->intertia -= f;
         if (!s->n2->locked)

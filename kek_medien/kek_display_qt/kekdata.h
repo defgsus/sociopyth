@@ -30,16 +30,20 @@ public:
 
     struct Title : public Position
     {
-        QString name, url;
+        QString name, url, type;
+
+        QString fullUrl() const { return KekData::fullUrl(url); }
     };
 
     struct Company : public Position
     {
-        QString name, url;
+        QString name, url, address, remarks;
         std::vector<Share> shares;
         std::vector<Title*> titles;
         int total_titles, total_shares;
         float total_shares_percent;
+
+        QString fullUrl() const { return KekData::fullUrl(url); }
 
     private:
         friend KekData;
@@ -50,6 +54,9 @@ public:
 
     KekData();
     ~KekData();
+
+    /** Returns the full url, with kek-online... at the front */
+    static QString fullUrl(const QString& url);
 
     // ----------------- handling --------------
 
