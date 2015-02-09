@@ -5,6 +5,8 @@ html/
 *.db
 *.sql*
 
+*.pro.user
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
