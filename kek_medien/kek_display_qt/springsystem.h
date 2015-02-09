@@ -54,7 +54,10 @@ public:
     // -------- properties -----------
 
     void setDelta(Float s) { delta_ = s; }
+    // these are all multipliers
     void setStiffness(Float s) { stiffness_ = s; }
+    void setMinimumRadius(Float r) { minRadius_ = r; }
+    void setRestDistance(Float d) { restDistance_ = d; }
 
     // debug
     QString toString() const;
@@ -85,7 +88,10 @@ private:
     std::vector<std::shared_ptr<Spring>> springs_;
 
     int frame_;
-    Float stiffness_, delta_;
+    Float delta_,
+        stiffness_,
+        minRadius_,
+        restDistance_;
 };
 
 #endif // SPRINGSYSTEM_H

@@ -9,15 +9,37 @@
 */
 
 #include <QTextStream>
+#include <QDesktopServices>
 
 #include "companyview.h"
 
 CompanyView::CompanyView(QWidget *parent) :
     QTextBrowser(parent)
 {
+    setOpenLinks(false);
+    connect(this, SIGNAL(anchorClicked(QUrl)),
+            this, SLOT(onAnchorClicked_(QUrl)));
 }
 
+void CompanyView::onAnchorClicked_(const QUrl &url)
+{
+    QString link = url.toString();
+    if (link.startsWith("comp:"))
+        emit companySelected(link.mid(5));
+    else if (link.startsWith("http"))
+        QDesktopServices::openUrl(url);
+}
 
+namespace {
+
+    QString percentString(float p)
+    {
+        if (p > 0)
+            return QString::number(p) + "%";
+        else
+            return CompanyView::tr("n.a.");
+    }
+}
 
 void CompanyView::setCompany(KekData::Company * c)
 {
@@ -30,11 +52,24 @@ void CompanyView::setCompany(KekData::Company * c)
 
     if (!c->shares.empty())
     {
-        s << "<p>" << tr("shares") << "(" << c->shares.size() << "):<ul>\n";
+        s << "<p>" << tr("shares") << " (" << c->shares.size() << "):<ul>\n";
 
         for (const KekData::Share & sh : c->shares)
         {
-            s << "<li>" << sh.percent << "% <a href=\"" << sh.company->fullUrl() << "\">"
+            s << "<li>" << percentString(sh.percent) << " <a href=\"comp:" << sh.company->name << "\">"
+              << sh.company->name << "</a></li>\n";
+        }
+
+        s << "</ul></p>\n";
+    }
+
+    if (!c->owners.empty())
+    {
+        s << "<p>" << tr("owned by") << " (" << c->owners.size() << "):<ul>\n";
+
+        for (const KekData::Share & sh : c->owners)
+        {
+            s << "<li>" << percentString(sh.percent) << " <a href=\"comp:" << sh.company->name << "\">"
               << sh.company->name << "</a></li>\n";
         }
 
@@ -43,7 +78,7 @@ void CompanyView::setCompany(KekData::Company * c)
 
     if (!c->titles.empty())
     {
-        s << "<p>" << tr("titles") << "(" << c->titles.size() << "):<ul>\n";
+        s << "<p>" << tr("titles") << " (" << c->titles.size() << "):<ul>\n";
 
         for (const KekData::Title * t : c->titles)
         {
@@ -59,7 +94,7 @@ void CompanyView::setCompany(KekData::Company * c)
     {
         std::sort(tits.begin(), tits.end(), [](KekData::Title * l, KekData::Title * r) { return l->name < r->name; } );
 
-        s << "<p>" << tr("indirect titles") << "(" << tits.size() << "):<ul>\n";
+        s << "<p>" << tr("indirect titles") << " (" << tits.size() << "):<ul>\n";
 
         for (const KekData::Title * t : tits)
         {

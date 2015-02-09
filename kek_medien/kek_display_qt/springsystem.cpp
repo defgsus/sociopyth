@@ -29,10 +29,12 @@ public:
 
 
 SpringSystem::SpringSystem()
-    : thread_       (0),
-      frame_        (0),
-      stiffness_    (1.),
-      delta_        (0.02)
+    : thread_       (0)
+    , frame_        (0)
+    , delta_        (0.02)
+    , stiffness_    (1.)
+    , minRadius_    (1.)
+    , restDistance_ (1.)
 {
 
 }
@@ -143,7 +145,8 @@ void SpringSystem::relaxSprings(Float delta)
         s->dist = dir.length();
 
         // spring force
-        vec2 f = std::max(Float(-.1),std::min(Float(.1), Float(.5) * delta * stiffness_ * s->stiff * (s->rest_dist - s->dist)))
+        vec2 f = std::max(Float(-.1),std::min(Float(.1), Float(.5) * delta * stiffness_ * s->stiff
+                                              * (s->rest_dist * restDistance_ - s->dist)))
                     * (dir / s->dist);
         if (!s->n1->locked)
             s->n1->intertia -= f;
@@ -167,6 +170,7 @@ void SpringSystem::relaxDistance(Float delta)
 
             Float mind = std::max(n1->min_dist, n2->min_dist);
             mind = std::max(mind, 10.f);
+            mind *= minRadius_;
 
             vec2 dir = n2->pos - n1->pos;
             Float ds = dir.lengthSquared();

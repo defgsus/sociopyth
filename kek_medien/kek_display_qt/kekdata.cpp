@@ -15,12 +15,19 @@ KekData::~KekData()
 {
 
 }
-
-QString KekData::fullUrl(const QString &url)
+//http://kek-online.de/no_cache/information/mediendatenbank.html?L=0%23&m=735&mt=1,2,3,4&s=&f=0
+QString KekData::fullUrl(QString url)
 {
-    static const QString base_url = "http://kek-online.de/";
-    return url.startsWith(base_url)
-            ? base_url : (base_url + url);
+    static const QString base_url = "http://www.kek-online.de/";
+
+    if (!url.startsWith(base_url))
+        url.prepend(base_url);
+
+    // also fix the stupid & at the end
+    while (url.endsWith("&"))
+        url = url.left(url.size()-1);
+
+    return url;
 }
 
 void KekData::clear()
@@ -298,9 +305,25 @@ bool KekData::saveXml(const QString &fn)
 }
 
 
-/* inefficient but easy */
+// ------------------------- value calculation --------------------
+
+// Well, this stuff is quite inefficient and probably wrong
+// i wasn't spending too much time here yet.
+
+void KekData::clearVisited_()
+{
+    // clear the visit flag
+    for (auto const & i : compmap_)
+    {
+        Company * c = i.second.get();
+        c->visited_ = false;
+    }
+}
+
 void KekData::calcValues_()
 {
+    getOwners_();
+
     for (auto const & i : compmap_)
     {
         Company * c = i.second.get();
@@ -308,46 +331,74 @@ void KekData::calcValues_()
     }
 }
 
-struct KekData::CountStruct
-{
-    int total_titles, total_shares;
-    float total_shares_percent;
-};
 
-void KekData::count_(Company * c) const
+void KekData::count_(Company * c)
+{
+    clearVisited_();
+
+    Heuristics h;
+    h.total_shares = h.total_titles = 0;
+    h.total_shares_percent = h.total_titles_percent = 0.;
+    countSub_(c, h, 1.);
+    c->total_shares = h.total_shares;
+    c->total_titles = h.total_titles;
+    c->total_titles_percent = h.total_titles_percent;
+    c->total_shares_percent = h.total_shares_percent;
+
+    clearVisited_();
+    c->cluster_size = countCluster_(c);
+}
+
+void KekData::countSub_(Company * c, Heuristics& h, float factor)
+{
+    h.total_shares += c->shares.size();
+    h.total_titles += c->titles.size();
+    h.total_titles_percent += factor * c->titles.size();
+    h.total_shares_percent += factor * c->shares.size();
+    h.cluster_size++;
+
+    if (!c->visited_)
+    for (const Share & s : c->shares)
+    {
+        s.company->visited_ = true;
+        countSub_(s.company, h, factor * s.percent / 100.);
+    }
+}
+
+int KekData::countCluster_(Company * c)
+{
+    int ret = c->shares.size() + c->owners.size();
+
+    c->visited_ = true;
+
+    for (const Share & s : c->shares)
+        if (!s.company->visited_)
+            ret += countCluster_(s.company);
+    for (const Share & s : c->owners)
+        if (!s.company->visited_)
+            ret += countCluster_(s.company);
+    return ret;
+}
+
+void KekData::getOwners_()
 {
     for (auto const & i : compmap_)
     {
         Company * c = i.second.get();
-        c->visited_ = false;
+
+        for (const Share & s : c->shares)
+        {
+            Share o;
+            o.company = c;
+            o.percent = s.percent;
+            s.company->owners.push_back(o);
+        }
     }
 
-    CountStruct cs;
-    cs.total_shares = cs.total_titles = 0;
-    cs.total_shares_percent = 0.;
-    countSub_(c, cs);
-    c->total_shares = cs.total_shares;
-    c->total_titles = cs.total_titles;
-    c->total_shares_percent = cs.total_shares_percent;
-}
-
-void KekData::countSub_(Company * c, CountStruct& cs) const
-{
-    cs.total_shares += c->shares.size();
-    cs.total_titles += c->titles.size();
-
-    for (const Share & s : c->shares)
+    for (auto const & i : compmap_)
     {
-        /*cs.total_shares_percent +=
-                 s.percent
-               + s.percent / 100. * s.company->total_shares_percent;
-        */
-        if (!s.company->visited_)
-        {
-            s.company->visited_ = true;
-            countSub_(s.company, cs);
-        }
-
+        Company * c = i.second.get();
+        std::sort(c->owners.begin(), c->owners.end(), [](const Share& l, const Share& r) { return l.percent > r.percent; } );
     }
 }
 
@@ -357,29 +408,28 @@ std::vector<KekData::Title*> KekData::getIndirectTitles(Company * c)
     if (c->shares.empty())
         return std::vector<Title*>();
 
-    // clear the visit flag
-    for (auto const & i : compmap_)
-    {
-        Company * c = i.second.get();
-        c->visited_ = false;
-    }
+    clearVisited_();
 
-    std::vector<Title*> tits;
+    std::set<Title*> tits;
     for (const Share & s : c->shares)
-        getTitles_(s.company, tits);
-    return tits;
+        getIndirectTitles_(s.company, tits);
+
+    std::vector<Title*> ret;
+    for (Title * t : tits)
+        ret.push_back(t);
+    return ret;
 }
 
-void KekData::getTitles_(Company * c, std::vector<Title *> & tits)
+void KekData::getIndirectTitles_(Company * c, std::set<Title *> & tits)
 {
     c->visited_ = true;
 
     for (Title * t : c->titles)
-        tits.push_back(t);
+        tits.insert(t);
 
     for (const Share & s : c->shares)
         if (!s.company->visited_)
-            getTitles_(s.company, tits);
+            getIndirectTitles_(s.company, tits);
 }
 
 void KekData::getSpringSystem(SpringSystem * sys)
@@ -401,16 +451,21 @@ void KekData::getSpringSystem(SpringSystem * sys)
         node->color = QColor(100, 100, 100);
         if (c->x == 0 && c->y == 0)
         {
-            node->pos.setX(4.*      std::min(200., 20.0 * std::pow(1.*c->total_shares, 1./1.5)));
-            node->pos.setY(4.*(200.-std::min(200., 20.0 * std::pow(1.*c->total_titles, 1./1.5))));
+            if (c->cluster_size < 100)
+            {
+                node->pos.setX(-200. - c->total_shares * 100.);
+                node->pos.setY(500. + c->total_titles * 100.);
+            }
+            else
+            {
+                node->pos.setX(4.*      std::min(400., 20.0 * std::pow(1.*c->total_shares, 1./1.6)));
+                node->pos.setY(4.*(400.-std::min(400., 20.0 * std::pow(1.*c->total_titles, 1./1.6))));
+            }
             node->pos.setX(node->pos.x() + (.5-float(rand())/RAND_MAX));
             node->pos.setY(node->pos.y() + (.5-float(rand())/RAND_MAX));
         }
-        //node->min_dist = std::max(3.,std::min(35., std::sqrt(c->total_shares) + c->shares.size() / 2. ));
-        node->min_dist = std::max(5.,std::min(55.,  //std::sqrt(c->total_shares_percent) / 2.
-                                                    //+ 5.
-                                                      1.6 * std::max(c->titles.size(), c->shares.size())
-                                                    + 0.3 * std::max(c->total_titles, c->total_shares) ));
+        node->min_dist = std::max(5.,std::min(55.,    1.4 * std::max(c->titles.size(), c->shares.size())
+                                                    + 0.9 * std::max(c->total_titles_percent, c->total_shares_percent) ));
         cnodemap_.insert(std::make_pair(c, node));
         nodecmap_.insert(std::make_pair(node, c));
 
@@ -431,8 +486,8 @@ void KekData::getSpringSystem(SpringSystem * sys)
                 tnode->color = QColor(90, 90, 200);
             if (t->x == 0 && t->y == 0)
             {
-                tnode->pos.setX(tnode->pos.x() + (.5-float(rand())/RAND_MAX));
-                tnode->pos.setY(tnode->pos.y() + (.5-float(rand())/RAND_MAX));
+                tnode->pos.setX(node->pos.x() + (.5-float(rand())/RAND_MAX));
+                tnode->pos.setY(node->pos.y() + (.5-float(rand())/RAND_MAX));
             }
             tnode->min_dist = node->min_dist;
 

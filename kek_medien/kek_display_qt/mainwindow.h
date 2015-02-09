@@ -33,6 +33,7 @@ private slots:
 
     void onCompanyClicked_(KekData::Company*);
     void onCompanySelected_(const QModelIndex&);
+    void onCompanySelectedBrowser_(const QString& name);
 
 protected:
 

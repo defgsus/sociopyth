@@ -22,9 +22,15 @@ public:
 
 signals:
 
+    void companySelected(const QString& name);
+
 public slots:
 
     void setCompany(KekData::Company*);
+
+private slots:
+
+    void onAnchorClicked_(const QUrl & link);
 
 };
 

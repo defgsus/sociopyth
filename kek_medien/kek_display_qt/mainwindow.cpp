@@ -73,6 +73,8 @@ void MainWindow::createWidgets_()
     compView_ = new CompanyView(this);
     compView_->setObjectName("CompanyView");
     createDock_(compView_, tr("company view"));
+    connect(compView_, SIGNAL(companySelected(QString)),
+            this, SLOT(onCompanySelectedBrowser_(QString)));
 
     kekView_ = new KekView(this);
     kekView_->setObjectName("MapView");
@@ -107,8 +109,8 @@ void MainWindow::load()
 {
     kekView_->stop();
 
-    //kek_.loadXml("../kek_data.xml");
-    kek_.loadXml("../kek_edit.xml");
+    if (!kek_.loadXml("./kek_edit.xml"))
+        kek_.loadXml("../kek_data.xml");
 
     // update map
     kekView_->setKekData(&kek_);
@@ -124,7 +126,7 @@ void MainWindow::load()
 
 void MainWindow::save()
 {
-    kek_.saveXml("../kek_edit.xml");
+    kek_.saveXml("./kek_edit.xml");
 }
 
 
@@ -145,4 +147,16 @@ void MainWindow::onCompanySelected_(const QModelIndex & idx)
 
     compView_->setCompany(c);
     kekView_->focusOnCompany(c);
+}
+
+void MainWindow::onCompanySelectedBrowser_(const QString& name)
+{
+    auto c = kek_.getCompany(name);
+    if (!c)
+        return;
+
+    int idx = kek_.index(c);
+    list_->setCurrentIndex(fmodel_->mapFromSource(model_->index(idx,0)));
+    kekView_->focusOnCompany(c);
+    compView_->setCompany(c);
 }

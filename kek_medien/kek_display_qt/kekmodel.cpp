@@ -19,9 +19,12 @@ KekModel::KekModel(KekData * kek, QObject *parent) :
             << "actor"
             << "titles"
             << "shares"
+            << "owners"
             << "total titles"
             << "total shares"
-            << "%"
+            << "total titles %"
+            << "total shares %"
+            << "cluster size"
             << "address"
             << "remarks"
             << "url"
@@ -72,12 +75,15 @@ QVariant KekModel::data(const QModelIndex &index, int role) const
             case 0: return kek_->companies()[row]->name;
             case 1: return int(kek_->companies()[row]->titles.size());
             case 2: return int(kek_->companies()[row]->shares.size());
-            case 3: return kek_->companies()[row]->total_titles;
-            case 4: return kek_->companies()[row]->total_shares;
-            case 5: return kek_->companies()[row]->total_shares_percent;
-            case 6: return kek_->companies()[row]->address;
-            case 7: return kek_->companies()[row]->remarks;
-            case 8: return kek_->companies()[row]->url;
+            case 3: return int(kek_->companies()[row]->owners.size());
+            case 4: return kek_->companies()[row]->total_titles;
+            case 5: return kek_->companies()[row]->total_shares;
+            case 6: return kek_->companies()[row]->total_titles_percent;
+            case 7: return kek_->companies()[row]->total_shares_percent;
+            case 8: return kek_->companies()[row]->cluster_size;
+            case 9: return kek_->companies()[row]->address;
+            case 10: return kek_->companies()[row]->remarks;
+            case 11: return kek_->companies()[row]->url;
             default: return "-";
         }
     }

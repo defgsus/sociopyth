@@ -66,10 +66,12 @@ KekView::KekView(QWidget *parent)
         });
 
         sbScale_ = createDoubleSpinBox_(tr("view scale"), 1., 0.01, 100.);
-        sbScale_->setSingleStep(.5);
-        sbDelta_ = createDoubleSpinBox_(tr("physics speed"), 0.02, 0.001, 1.);
-        sbDelta_->setSingleStep(0.001);
+        sbScale_->setSingleStep(.1);
         sbStiff_ = createDoubleSpinBox_(tr("stiffness"), 1., 0.0, 1000.);
+        sbDistance_ = createDoubleSpinBox_(tr("distance"), 1., 0.001, 1000.);
+        sbRadius_ = createDoubleSpinBox_(tr("radius"), 1., 0.001, 1000.);
+        sbDelta_ = createDoubleSpinBox_(tr("physics speed"), 0.02, 0.00001, 1.);
+        sbDelta_->setSingleStep(0.001);
 }
 
 QDoubleSpinBox * KekView::createDoubleSpinBox_(const QString &name, double value, double rangeMin, double rangeMax)
@@ -158,6 +160,8 @@ void KekView::onValueChanged_()
 {
     sys_->setDelta(sbDelta_->value());
     sys_->setStiffness(sbStiff_->value());
+    sys_->setMinimumRadius(sbRadius_->value());
+    sys_->setRestDistance(sbDistance_->value());
 
     updateViewIfNotRunning();
 }

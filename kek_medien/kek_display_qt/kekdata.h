@@ -2,6 +2,7 @@
 #define KEKDATA_H
 
 #include <map>
+#include <set>
 #include <vector>
 #include <memory>
 
@@ -23,6 +24,14 @@ public:
         Position() : x(0), y(0), fixed(false) { }
     };
 
+    // recursively calculated values
+    struct Heuristics
+    {
+        int total_titles, total_shares, cluster_size;
+        float total_titles_percent,
+              total_shares_percent;
+    };
+
     struct Share
     {
         Company * company;
@@ -36,15 +45,11 @@ public:
         QString fullUrl() const { return KekData::fullUrl(url); }
     };
 
-    struct Company : public Position
+    struct Company : public Position, public Heuristics
     {
         QString name, url, address, remarks;
-        std::vector<Share> shares;
+        std::vector<Share> shares, owners;
         std::vector<Title*> titles;
-
-        // calced values
-        int total_titles, total_shares;
-        float total_shares_percent;
 
         QString fullUrl() const { return KekData::fullUrl(url); }
 
@@ -62,7 +67,7 @@ public:
     ~KekData();
 
     /** Returns the full url, with kek-online... at the front */
-    static QString fullUrl(const QString& url);
+    static QString fullUrl(QString url);
 
     // ----------------- handling --------------
 
@@ -97,11 +102,13 @@ public:
 
 private:
 
-    struct CountStruct;
+    void clearVisited_();
     void calcValues_();
-    void count_(Company *) const;
-    void countSub_(Company *, CountStruct&) const;
-    void getTitles_(Company *, std::vector<Title*>&);
+    void count_(Company *);
+    void countSub_(Company *, Heuristics&h, float factor);
+    int countCluster_(Company * );
+    void getOwners_();
+    void getIndirectTitles_(Company *, std::set<Title*>&);
 
     std::map<QString, std::shared_ptr<Company>> compmap_;
     std::map<QString, std::shared_ptr<Title>> titlemap_;
