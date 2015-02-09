@@ -41,7 +41,9 @@ KekData::Company * KekData::getCompany(const QString& name)
         return i->second.get();
 
     auto c = new Company;
+
     c->name = name;
+    c->kek = this;
 
     auto p = std::shared_ptr<Company>(c);
     compmap_.insert(std::make_pair(name, p));
@@ -182,6 +184,9 @@ bool KekData::loadXml(const QString &fn)
                 //qDebug() << "--- s ---" << s.percent << s.company;
             }
         }
+
+        std::sort(c->titles.begin(), c->titles.end(), [](Title * l, Title * r) { return l->name < r->name; } );
+        std::sort(c->shares.begin(), c->shares.end(), [](const Share& l, const Share& r) { return l.percent > r.percent; } );
     }
 
     nodes = dom.elementsByTagName("title-desc");
@@ -293,53 +298,96 @@ bool KekData::saveXml(const QString &fn)
 }
 
 
+/* inefficient but easy */
 void KekData::calcValues_()
 {
     for (auto const & i : compmap_)
     {
         Company * c = i.second.get();
-        c->counted_ = false;
-        c->total_shares = c->shares.size();
-        c->total_titles = c->titles.size();
-        c->total_shares_percent = 0;
-    }
-
-    for (auto const & i : compmap_)
-    {
-        Company * c = i.second.get();
-
         count_(c);
     }
 }
 
-/* inefficient and easy */
+struct KekData::CountStruct
+{
+    int total_titles, total_shares;
+    float total_shares_percent;
+};
+
 void KekData::count_(Company * c) const
 {
-    int t = 0, ts = 0;
-    float tsp = 0;
+    for (auto const & i : compmap_)
+    {
+        Company * c = i.second.get();
+        c->visited_ = false;
+    }
+
+    CountStruct cs;
+    cs.total_shares = cs.total_titles = 0;
+    cs.total_shares_percent = 0.;
+    countSub_(c, cs);
+    c->total_shares = cs.total_shares;
+    c->total_titles = cs.total_titles;
+    c->total_shares_percent = cs.total_shares_percent;
+}
+
+void KekData::countSub_(Company * c, CountStruct& cs) const
+{
+    cs.total_shares += c->shares.size();
+    cs.total_titles += c->titles.size();
+
     for (const Share & s : c->shares)
     {
-        if (!s.company->counted_)
-        {
-            s.company->counted_ = true;
-            count_(s.company);
-        }
-        t += s.company->total_titles;
-        ts += s.company->total_shares;
-        tsp += s.percent
+        /*cs.total_shares_percent +=
+                 s.percent
                + s.percent / 100. * s.company->total_shares_percent;
+        */
+        if (!s.company->visited_)
+        {
+            s.company->visited_ = true;
+            countSub_(s.company, cs);
+        }
+
     }
-    c->total_titles += t;
-    c->total_shares += ts;
-    c->total_shares_percent = tsp;
 }
 
 
+std::vector<KekData::Title*> KekData::getIndirectTitles(Company * c)
+{
+    if (c->shares.empty())
+        return std::vector<Title*>();
 
+    // clear the visit flag
+    for (auto const & i : compmap_)
+    {
+        Company * c = i.second.get();
+        c->visited_ = false;
+    }
+
+    std::vector<Title*> tits;
+    for (const Share & s : c->shares)
+        getTitles_(s.company, tits);
+    return tits;
+}
+
+void KekData::getTitles_(Company * c, std::vector<Title *> & tits)
+{
+    c->visited_ = true;
+
+    for (Title * t : c->titles)
+        tits.push_back(t);
+
+    for (const Share & s : c->shares)
+        if (!s.company->visited_)
+            getTitles_(s.company, tits);
+}
 
 void KekData::getSpringSystem(SpringSystem * sys)
 {
     sys->clear();
+    cnodemap_.clear();
+    nodecmap_.clear();
+    tnodemap_.clear();
 
     // create company nodes
     for (auto const & i : compmap_)
@@ -359,10 +407,10 @@ void KekData::getSpringSystem(SpringSystem * sys)
             node->pos.setY(node->pos.y() + (.5-float(rand())/RAND_MAX));
         }
         //node->min_dist = std::max(3.,std::min(35., std::sqrt(c->total_shares) + c->shares.size() / 2. ));
-        node->min_dist = std::max(3.,std::min(35.,  std::sqrt(c->total_shares_percent) / 2.
-                                                    + 5.
-                                                    + c->shares.size() / 3.
-                                                    + c->titles.size() / 2.));
+        node->min_dist = std::max(5.,std::min(55.,  //std::sqrt(c->total_shares_percent) / 2.
+                                                    //+ 5.
+                                                      1.6 * std::max(c->titles.size(), c->shares.size())
+                                                    + 0.3 * std::max(c->total_titles, c->total_shares) ));
         cnodemap_.insert(std::make_pair(c, node));
         nodecmap_.insert(std::make_pair(node, c));
 
@@ -370,9 +418,17 @@ void KekData::getSpringSystem(SpringSystem * sys)
         for (Title * t : c->titles)
         {
             auto tnode = sys->createNode();
-            tnode->pos = node->pos;
+            tnode->pos.setX(t->x);
+            tnode->pos.setY(t->y);
             tnode->locked = t->fixed;
-            tnode->color = QColor(150, 130, 90);
+            if (t->type == "Radio")
+                tnode->color = QColor(200, 200, 90);
+            else if (t->type == "Fernsehen")
+                tnode->color = QColor(200, 90, 90);
+            else if (t->type == "Presse")
+                tnode->color = QColor(90, 200, 90);
+            else // "Online"
+                tnode->color = QColor(90, 90, 200);
             if (t->x == 0 && t->y == 0)
             {
                 tnode->pos.setX(tnode->pos.x() + (.5-float(rand())/RAND_MAX));
@@ -403,7 +459,7 @@ void KekData::getSpringSystem(SpringSystem * sys)
             //dist = std::max(dist, n1->min_dist + n2->min_dist);
 
             auto spring = sys->connect(n1, n2, dist);
-            spring->stiff = 0.1 + 0.9 * s.percent / 100.;
+            spring->stiff = 0.001 + 0.999 * std::pow(s.percent / 100., 2.);
         }
 
         // connect titles

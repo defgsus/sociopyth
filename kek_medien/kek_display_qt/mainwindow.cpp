@@ -9,6 +9,7 @@
 #include <QGraphicsItem>
 #include <QDockWidget>
 #include <QDebug>
+#include <QSettings>
 
 #include "mainwindow.h"
 #include "kekdata.h"
@@ -21,19 +22,30 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow   (parent)
     , model_        (0)
     , fmodel_       (0)
+    , settings_     (new QSettings(QSettings::IniFormat, QSettings::UserScope, "modular-audio-graphics", "kek-viewer", this))
 {
     setMinimumSize(512, 512);
 
     createWidgets_();
+
+    if (settings_->contains("window-geom"))
+        restoreGeometry( settings_->value("window-geom").toByteArray() );
+    if (settings_->contains("window-state"))
+        restoreState( settings_->value("window-state").toByteArray() );
 
     load();
 }
 
 MainWindow::~MainWindow()
 {
-
 }
 
+void MainWindow::closeEvent(QCloseEvent * e)
+{
+    settings_->setValue("window-geom", saveGeometry());
+    settings_->setValue("window-state", saveState());
+    QMainWindow::closeEvent(e);
+}
 
 QDockWidget * MainWindow::createDock_(QWidget *w, const QString& title, Qt::DockWidgetArea area)
 {
@@ -95,7 +107,8 @@ void MainWindow::load()
 {
     kekView_->stop();
 
-    kek_.loadXml("../kek_data.xml");
+    //kek_.loadXml("../kek_data.xml");
+    kek_.loadXml("../kek_edit.xml");
 
     // update map
     kekView_->setKekData(&kek_);

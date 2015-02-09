@@ -24,7 +24,7 @@ signals:
 
 public slots:
 
-    void setCompany(const KekData::Company* );
+    void setCompany(KekData::Company*);
 
 };
 

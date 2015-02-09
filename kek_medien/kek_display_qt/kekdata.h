@@ -15,11 +15,12 @@ public:
 
     struct Company;
 
+    // for spring-sys
     struct Position
     {
-        // spring-sys
         float x, y;
         bool fixed;
+        Position() : x(0), y(0), fixed(false) { }
     };
 
     struct Share
@@ -40,14 +41,19 @@ public:
         QString name, url, address, remarks;
         std::vector<Share> shares;
         std::vector<Title*> titles;
+
+        // calced values
         int total_titles, total_shares;
         float total_shares_percent;
 
         QString fullUrl() const { return KekData::fullUrl(url); }
 
+        /** Link to parent container */
+        KekData * kek;
+
     private:
         friend KekData;
-        bool counted_;
+        bool visited_;
     };
 
     // ---------------- ctor -------------------
@@ -79,14 +85,23 @@ public:
     SpringSystem::Node * nodeForCompany(Company *);
     SpringSystem::Node * nodeForTitle(Title *);
     Company * companyForNode(SpringSystem::Node*);
+
+    /** Returns the index of the company (arbitrary - but needed for the list model) */
     int index(Company *) const;
 
     void getSpringSystem(SpringSystem *);
 
+    /** Returns all indirect titles of the company,
+        that are connected through shares */
+    std::vector<Title*> getIndirectTitles(Company *);
+
 private:
 
+    struct CountStruct;
     void calcValues_();
-    void count_(Company * ) const;
+    void count_(Company *) const;
+    void countSub_(Company *, CountStruct&) const;
+    void getTitles_(Company *, std::vector<Title*>&);
 
     std::map<QString, std::shared_ptr<Company>> compmap_;
     std::map<QString, std::shared_ptr<Title>> titlemap_;

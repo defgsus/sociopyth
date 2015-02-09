@@ -17,6 +17,9 @@
 #include <QLayout>
 #include <QGraphicsItem>
 #include <QTimer>
+#ifdef QT_DEBUG
+#include <QDebug>
+#endif
 
 #include "kekview.h"
 #include "kekscene.h"
@@ -100,6 +103,10 @@ void KekView::setKekData(KekData * kek)
 {
     kek_ = kek;
     kek_->getSpringSystem(sys_);
+
+#ifdef QT_DEBUG
+    qDebug() << sys_->toString();
+#endif
 
     scene_->setSpringSystem(sys_);
     view_->setScene(scene_);

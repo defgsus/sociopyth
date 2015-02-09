@@ -2,6 +2,7 @@
 #include <random>
 
 #include <QThread>
+#include <QTextStream>
 
 #include "springsystem.h"
 
@@ -76,7 +77,27 @@ SpringSystem::Spring * SpringSystem::connect(Node * n1, Node * n2, Float rest_di
     return s;
 }
 
+QString SpringSystem::toString() const
+{
+    QString t;
+    QTextStream str(&t);
 
+    for (auto i : nodes_)
+    {
+        Node * n = i.get();
+        str << "Node(pos=<" << n->pos.x() << ", " << n->pos.y()
+            << ">; vel=<" << n->intertia.x() << ", " << n->intertia.y() << ">)\n";
+    }
+
+    for (auto i : springs_)
+    {
+        Spring * s = i.get();
+        str << "Spring(" << s->n1 << "-" << s->n2 << "; "
+            << "dist=" << s->dist << "; rest=" << s->rest_dist << "; stiff=" << s->stiff << ")\n";
+    }
+
+    return t;
+}
 
 
 void SpringSystem::startThread()

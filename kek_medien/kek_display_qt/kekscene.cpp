@@ -25,7 +25,7 @@ public:
         pen.setWidthF(0.1);
         setPen(pen);
 
-        setRadius( std::max(1.,std::min(5., 0.4 * node->min_dist )) );
+        setRadius( std::max(2.,std::min(10., 0.4 * node->min_dist )) );
     }
 
     void setRadius(qreal r) { setRect(-r/2., -r/2., r, r); }
@@ -104,7 +104,7 @@ void KekScene::setSpringSystem(SpringSystem *s)
 
         auto e = new QGraphicsLineItem();
         QPen pen(Qt::green);
-        pen.setWidthF(s->stiff);
+        pen.setWidthF(0.1 + s->stiff);
         e->setPen(pen);
         e->setZValue(-1);
 

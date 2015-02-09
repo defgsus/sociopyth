@@ -14,6 +14,7 @@ class QSortFilterProxyModel;
 class KekModel;
 class CompanyView;
 class KekView;
+class QSettings;
 
 class MainWindow : public QMainWindow
 {
@@ -32,6 +33,11 @@ private slots:
 
     void onCompanyClicked_(KekData::Company*);
     void onCompanySelected_(const QModelIndex&);
+
+protected:
+
+    void closeEvent(QCloseEvent *);
+
 private:
 
     void createWidgets_();
@@ -45,6 +51,8 @@ private:
     CompanyView * compView_;
     QTreeView * list_;
     KekView * kekView_;
+
+    QSettings * settings_;
 };
 
 #endif // MAINWINDOW_H

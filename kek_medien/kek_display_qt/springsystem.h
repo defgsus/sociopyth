@@ -56,6 +56,9 @@ public:
     void setDelta(Float s) { delta_ = s; }
     void setStiffness(Float s) { stiffness_ = s; }
 
+    // debug
+    QString toString() const;
+
     // --------- physics -------------
 
     void step() { step(delta_); }

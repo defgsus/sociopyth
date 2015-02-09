@@ -19,7 +19,7 @@ CompanyView::CompanyView(QWidget *parent) :
 
 
 
-void CompanyView::setCompany(const KekData::Company * c)
+void CompanyView::setCompany(KekData::Company * c)
 {
     clear();
 
@@ -30,7 +30,7 @@ void CompanyView::setCompany(const KekData::Company * c)
 
     if (!c->shares.empty())
     {
-        s << "<p>" << tr("shares") << ":<ul>\n";
+        s << "<p>" << tr("shares") << "(" << c->shares.size() << "):<ul>\n";
 
         for (const KekData::Share & sh : c->shares)
         {
@@ -43,9 +43,25 @@ void CompanyView::setCompany(const KekData::Company * c)
 
     if (!c->titles.empty())
     {
-        s << "<p>" << tr("titles") << ":<ul>\n";
+        s << "<p>" << tr("titles") << "(" << c->titles.size() << "):<ul>\n";
 
         for (const KekData::Title * t : c->titles)
+        {
+            s << "<li><a href=\"" << t->fullUrl() << "\">" << t->name << "</a> "
+              << "(" << t->type << ")</li>\n";
+        }
+
+        s << "</ul></p>\n";
+    }
+
+    auto tits = c->kek->getIndirectTitles(c);
+    if (!tits.empty())
+    {
+        std::sort(tits.begin(), tits.end(), [](KekData::Title * l, KekData::Title * r) { return l->name < r->name; } );
+
+        s << "<p>" << tr("indirect titles") << "(" << tits.size() << "):<ul>\n";
+
+        for (const KekData::Title * t : tits)
         {
             s << "<li><a href=\"" << t->fullUrl() << "\">" << t->name << "</a> "
               << "(" << t->type << ")</li>\n";
