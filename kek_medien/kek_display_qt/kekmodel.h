@@ -12,6 +12,7 @@
 #define KEKMODEL_H
 
 #include <QAbstractItemModel>
+#include <QStringList>
 
 class KekData;
 
