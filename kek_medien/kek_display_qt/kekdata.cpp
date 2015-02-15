@@ -51,6 +51,8 @@ KekData::Company * KekData::getCompany(const QString& name)
 
     c->name = name;
     c->kek = this;
+    c->index = compmap_.size();
+    c->clusterId = 0;
 
     auto p = std::shared_ptr<Company>(c);
     compmap_.insert(std::make_pair(name, p));
@@ -212,6 +214,17 @@ bool KekData::loadXml(const QString &fn)
         t->fixed = n.attributes().namedItem("fix").nodeValue().toInt();
     }
 
+#if 0
+    auto tmp = compmap_;
+    compmap_.clear();
+    for (auto & i : tmp)
+    {
+        Company * c = i.second.get();
+        if (c->shares.size()>=4)
+            compmap_.insert(std::make_pair(c->name, i.second));
+    }
+#endif
+
     calcValues_();
 
 #ifdef QT_DEBUG
@@ -323,6 +336,7 @@ void KekData::clearVisited_()
 void KekData::calcValues_()
 {
     getOwners_();
+    getClusters_();
 
     for (auto const & i : compmap_)
     {
@@ -420,6 +434,7 @@ std::vector<KekData::Title*> KekData::getIndirectTitles(Company * c)
     return ret;
 }
 
+
 void KekData::getIndirectTitles_(Company * c, std::set<Title *> & tits)
 {
     c->visited_ = true;
@@ -430,6 +445,14 @@ void KekData::getIndirectTitles_(Company * c, std::set<Title *> & tits)
     for (const Share & s : c->shares)
         if (!s.company->visited_)
             getIndirectTitles_(s.company, tits);
+}
+
+QColor KekData::clusterColor(unsigned long i) const
+{
+    return QColor(
+                (int)(155.+100.*std::sin(i*1.01)),
+                (int)(155.+100.*std::sin(i*1.313)),
+                (int)(155.+100.*std::sin(i*1.531)));
 }
 
 void KekData::getSpringSystem(SpringSystem * sys)
@@ -448,9 +471,10 @@ void KekData::getSpringSystem(SpringSystem * sys)
         node->pos.setX(c->x);
         node->pos.setY(c->y);
         node->locked = c->fixed;
-        node->color = QColor(100, 100, 100);
+        node->color = clusterColor(c->clusterId);//QColor(100, 100, 100);
         if (c->x == 0 && c->y == 0)
         {
+            /*
             if (c->cluster_size < 100)
             {
                 node->pos.setX(-200. - c->total_shares * 100.);
@@ -461,14 +485,27 @@ void KekData::getSpringSystem(SpringSystem * sys)
                 node->pos.setX(4.*      std::min(400., 20.0 * std::pow(1.*c->total_shares, 1./1.6)));
                 node->pos.setY(4.*(400.-std::min(400., 20.0 * std::pow(1.*c->total_titles, 1./1.6))));
             }
+            */
+            node->pos.setX(std::min(1000., c->clusterMembers * 40.));
+            node->pos.setY(c->clusterId);
+            if (c->cluster_size < 100)
+                node->pos.setX(node->pos.x() - 300.);
+
             node->pos.setX(node->pos.x() + (.5-float(rand())/RAND_MAX));
             node->pos.setY(node->pos.y() + (.5-float(rand())/RAND_MAX));
         }
-        node->min_dist = std::max(5.,std::min(55.,    1.4 * std::max(c->titles.size(), c->shares.size())
-                                                    + 0.9 * std::max(c->total_titles_percent, c->total_shares_percent) ));
+        node->min_dist = std::max(5.,std::min(75.,
+                              1.1 * c->titles.size()
+                            + 0.5 * std::max(2.0 * c->shares.size(), 1.0 * c->owners.size())
+                            + 0.6 * std::max(c->total_titles_percent, c->total_shares_percent) ));
+//        if (node->min_dist>74.)
+//            node->locked = true;
+
         cnodemap_.insert(std::make_pair(c, node));
         nodecmap_.insert(std::make_pair(node, c));
 
+#define DO_TITLES
+#ifdef DO_TITLES
         // create title nodes
         for (Title * t : c->titles)
         {
@@ -476,6 +513,7 @@ void KekData::getSpringSystem(SpringSystem * sys)
             tnode->pos.setX(t->x);
             tnode->pos.setY(t->y);
             tnode->locked = t->fixed;
+#if 0
             if (t->type == "Radio")
                 tnode->color = QColor(200, 200, 90);
             else if (t->type == "Fernsehen")
@@ -484,6 +522,9 @@ void KekData::getSpringSystem(SpringSystem * sys)
                 tnode->color = QColor(90, 200, 90);
             else // "Online"
                 tnode->color = QColor(90, 90, 200);
+#else
+            tnode->color = node->color;
+#endif
             if (t->x == 0 && t->y == 0)
             {
                 tnode->pos.setX(node->pos.x() + (.5-float(rand())/RAND_MAX));
@@ -493,7 +534,7 @@ void KekData::getSpringSystem(SpringSystem * sys)
 
             tnodemap_.insert(std::make_pair(t, tnode));
         }
-
+#endif
     }
 
     // connections
@@ -512,11 +553,15 @@ void KekData::getSpringSystem(SpringSystem * sys)
 
             dist = std::max(dist, std::max(n1->min_dist, n2->min_dist));
             //dist = std::max(dist, n1->min_dist + n2->min_dist);
+#if 0
+            if (c->clusterId != s.company->clusterId)
+                dist = std::min(150., dist * 5.);
+#endif
 
             auto spring = sys->connect(n1, n2, dist);
             spring->stiff = 0.001 + 0.999 * std::pow(s.percent / 100., 2.);
         }
-
+#ifdef DO_TITLES
         // connect titles
         for (Title * t : c->titles)
         {
@@ -526,6 +571,7 @@ void KekData::getSpringSystem(SpringSystem * sys)
 
             sys->connect(n1, n2, dist);
         }
+#endif
     }
 }
 

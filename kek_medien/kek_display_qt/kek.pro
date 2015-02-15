@@ -13,6 +13,9 @@ TEMPLATE = app
 
 CONFIG += c++11
 
+INCLUDEPATH += /home/defgsus/prog/C/lib/dlib-18.13
+LIBS += -lX11
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     springsystem.cpp \
@@ -20,7 +23,9 @@ SOURCES += main.cpp\
     kekdata.cpp \
     kekmodel.cpp \
     companyview.cpp \
-    kekview.cpp
+    kekview.cpp \
+    kekdata_dlib.cpp \
+    /home/defgsus/prog/C/lib/dlib-18.13/dlib/all/source.cpp
 
 HEADERS  += mainwindow.h \
     springsystem.h \

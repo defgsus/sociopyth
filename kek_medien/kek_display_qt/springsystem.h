@@ -56,8 +56,10 @@ public:
     void setDelta(Float s) { delta_ = s; }
     // these are all multipliers
     void setStiffness(Float s) { stiffness_ = s; }
+    void setRadiusStiffness(Float s) { rstiffness_ = s; }
     void setMinimumRadius(Float r) { minRadius_ = r; }
     void setRestDistance(Float d) { restDistance_ = d; }
+    void setInertance(Float d) { inertance_ = d; }
 
     // debug
     QString toString() const;
@@ -90,6 +92,8 @@ private:
     int frame_;
     Float delta_,
         stiffness_,
+        rstiffness_,
+        inertance_,
         minRadius_,
         restDistance_;
 };

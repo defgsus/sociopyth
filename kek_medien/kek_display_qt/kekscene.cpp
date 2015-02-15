@@ -21,7 +21,7 @@ public:
         //setFlag(QGraphicsItem::ItemSendsScenePositionChanges);
 
         setBrush(QBrush(node->color));
-        QPen pen(node->color.lighter());
+        QPen pen(node->color.darker());
         pen.setWidthF(0.1);
         setPen(pen);
 
@@ -103,7 +103,7 @@ void KekScene::setSpringSystem(SpringSystem *s)
         SpringSystem::Spring * s = i.get();
 
         auto e = new QGraphicsLineItem();
-        QPen pen(Qt::green);
+        QPen pen(s->n1->color);
         pen.setWidthF(0.1 + s->stiff);
         e->setPen(pen);
         e->setZValue(-1);

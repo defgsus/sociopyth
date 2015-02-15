@@ -74,7 +74,7 @@ private:
     QVBoxLayout * controlLayout_;
 
     QTimer * timer_;
-    QDoubleSpinBox * sbScale_, *sbStiff_, *sbDelta_, *sbRadius_, *sbDistance_;
+    QDoubleSpinBox * sbScale_, *sbStiff_, *sbRStiff_, *sbInert_, *sbDelta_, *sbRadius_, *sbDistance_;
 };
 
 #endif // KEKVIEW_H

@@ -55,7 +55,7 @@ public:
 
         /** Link to parent container */
         KekData * kek;
-
+        unsigned long index, clusterId, clusterMembers;
     private:
         friend KekData;
         bool visited_;
@@ -77,6 +77,8 @@ public:
     bool saveXml(const QString& fn);
 
     QString toString() const;
+
+    QColor clusterColor(unsigned long) const;
 
     /** Always returns a Company struct.
         Ownership stays with this class. */
@@ -109,6 +111,8 @@ private:
     int countCluster_(Company * );
     void getOwners_();
     void getIndirectTitles_(Company *, std::set<Title*>&);
+
+    void getClusters_();
 
     std::map<QString, std::shared_ptr<Company>> compmap_;
     std::map<QString, std::shared_ptr<Title>> titlemap_;

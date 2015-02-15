@@ -69,8 +69,10 @@ KekView::KekView(QWidget *parent)
         sbScale_->setSingleStep(.1);
         sbStiff_ = createDoubleSpinBox_(tr("stiffness"), 1., 0.0, 1000.);
         sbDistance_ = createDoubleSpinBox_(tr("distance"), 1., 0.001, 1000.);
+        sbRStiff_ = createDoubleSpinBox_(tr("radius stiffness"), 1., 0.0, 1000.);
         sbRadius_ = createDoubleSpinBox_(tr("radius"), 1., 0.001, 1000.);
-        sbDelta_ = createDoubleSpinBox_(tr("physics speed"), 0.02, 0.00001, 1.);
+        sbInert_ = createDoubleSpinBox_(tr("inertance"), 0.1, 0.01, 10.);
+        sbDelta_ = createDoubleSpinBox_(tr("physics delta"), 0.02, 0.00001, 1.);
         sbDelta_->setSingleStep(0.001);
 }
 
@@ -160,6 +162,8 @@ void KekView::onValueChanged_()
 {
     sys_->setDelta(sbDelta_->value());
     sys_->setStiffness(sbStiff_->value());
+    sys_->setRadiusStiffness(sbRStiff_->value());
+    sys_->setInertance(std::pow(sbInert_->value(), 2.));
     sys_->setMinimumRadius(sbRadius_->value());
     sys_->setRestDistance(sbDistance_->value());
 

@@ -33,6 +33,7 @@ SpringSystem::SpringSystem()
     , frame_        (0)
     , delta_        (0.02)
     , stiffness_    (1.)
+    , rstiffness_   (1.)
     , minRadius_    (1.)
     , restDistance_ (1.)
 {
@@ -177,8 +178,9 @@ void SpringSystem::relaxDistance(Float delta)
 
             if (ds < mind*mind && ds > Float(0))
             {
-                Float d = std::sqrt(ds);
-                vec2 f = delta * .5 * (mind - d) * (dir / d);
+                Float d = std::sqrt(ds),
+                      a = 1.f - d / mind;
+                vec2 f = delta * rstiffness_ * .5 * a * (mind - d) * (dir / d);
                 if (!n1->locked)
                     n1->intertia -= f;
                 if (!n2->locked)
@@ -196,7 +198,7 @@ void SpringSystem::applyIntertia(Float delta, Float damp)
         if (n->locked)
             continue;
 
-        n->pos += delta * n->intertia;
+        n->pos += delta * n->intertia / (1. + inertance_ * n->min_dist);
 
         n->intertia -= delta * damp * n->intertia;
     }

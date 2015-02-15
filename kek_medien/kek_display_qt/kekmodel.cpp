@@ -16,10 +16,13 @@ KekModel::KekModel(KekData * kek, QObject *parent) :
     kek_                (kek)
 {
     headerNames_
+            << "index"
             << "actor"
             << "titles"
             << "shares"
             << "owners"
+            << "cluster"
+            << "cluster members"
             << "total titles"
             << "total shares"
             << "total titles %"
@@ -72,25 +75,28 @@ QVariant KekModel::data(const QModelIndex &index, int role) const
     {
         switch (index.column())
         {
-            case 0: return kek_->companies()[row]->name;
-            case 1: return int(kek_->companies()[row]->titles.size());
-            case 2: return int(kek_->companies()[row]->shares.size());
-            case 3: return int(kek_->companies()[row]->owners.size());
-            case 4: return kek_->companies()[row]->total_titles;
-            case 5: return kek_->companies()[row]->total_shares;
-            case 6: return kek_->companies()[row]->total_titles_percent;
-            case 7: return kek_->companies()[row]->total_shares_percent;
-            case 8: return kek_->companies()[row]->cluster_size;
-            case 9: return kek_->companies()[row]->address;
-            case 10: return kek_->companies()[row]->remarks;
-            case 11: return kek_->companies()[row]->url;
+            case 0: return int(kek_->companies()[row]->index);
+            case 1: return kek_->companies()[row]->name;
+            case 2: return int(kek_->companies()[row]->titles.size());
+            case 3: return int(kek_->companies()[row]->shares.size());
+            case 4: return int(kek_->companies()[row]->owners.size());
+            case 5: return int(kek_->companies()[row]->clusterId);
+            case 6: return int(kek_->companies()[row]->clusterMembers);
+            case 7: return kek_->companies()[row]->total_titles;
+            case 8: return kek_->companies()[row]->total_shares;
+            case 9: return kek_->companies()[row]->total_titles_percent;
+            case 10: return kek_->companies()[row]->total_shares_percent;
+            case 11: return kek_->companies()[row]->cluster_size;
+            case 12: return kek_->companies()[row]->address;
+            case 13: return kek_->companies()[row]->remarks;
+            case 14: return kek_->companies()[row]->url;
             default: return "-";
         }
     }
 
     // text alignment
     if (role == Qt::TextAlignmentRole)
-        return (index.column() == 0)?
+        return (index.column() == 1)?
                     (int)(Qt::AlignLeft | Qt::AlignVCenter)
                 :   (int)(Qt::AlignRight | Qt::AlignVCenter);
 
