@@ -182,4 +182,4 @@ for url in urls:
 	
 print str(errors) + " errors"
 
-bio_save_xml("./landtag_th.xml", people)
+bio_save_xml("./landtag_th6.xml", people)
