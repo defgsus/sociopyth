@@ -133,7 +133,7 @@ def parse_bio(url):
 				if type(i) is Tag:
 					if i.name == "ul":
 						for li in i.find_all("li"):
-							A.member[0].append(li.text)
+							A.member[2].append(li.text)
 
 	# biography							
 	dl = cont.find("dl", "vita")
@@ -151,7 +151,7 @@ def parse_bio(url):
 
 ########################################################################
 
-do_downlad = False
+do_download = False
 
 # download index file
 if do_download == True:

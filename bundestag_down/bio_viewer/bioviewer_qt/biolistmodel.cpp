@@ -17,9 +17,12 @@ BioListModel::BioListModel(BioData* data, QObject *parent) :
 {
     headerNames_
             << tr("Person")
-            << tr("Wahlkreis")
-            << tr("persönl.")
+            << tr("Partei")
             << tr("Beruf")
+            << tr("persönl.")
+            << tr("Wahlkreis")
+            << tr("Gremium")
+            << tr("Wahlperiode")
             << tr("orden. Aufgaben")
             << tr("stellv. Aufgaben")
             << tr("andere Funktionen")
@@ -70,13 +73,16 @@ QVariant BioListModel::data(const QModelIndex &index, int role) const
         switch (index.column())
         {
             case 0: return p.name;
-            case 1: return p.wahlkreis;
-            case 2: return p.birth;
-            case 3: return p.occupation;
-            case 4: return p.memberships.size() >= 1 ? p.memberships[0].size() : 0;
-            case 5: return p.memberships.size() >= 2 ? p.memberships[1].size() : 0;
-            case 6: return p.memberships.size() >= 3 ? p.memberships[2].size() : 0;
-            case 7: return p.memberships.size() >= 4 ? p.memberships[3].size() : 0;
+            case 1: return p.party;
+            case 2: return p.occupation;
+            case 3: return p.birth;
+            case 4: return p.wahlkreis;
+            case 5: return p.gremium;
+            case 6: return p.period;
+            case 7: return p.memberships.size() >= 1 ? p.memberships[0].size() : 0;
+            case 8: return p.memberships.size() >= 2 ? p.memberships[1].size() : 0;
+            case 9: return p.memberships.size() >= 3 ? p.memberships[2].size() : 0;
+            case 10: return p.memberships.size() >= 4 ? p.memberships[3].size() : 0;
             default: return "-";
         }
     }
