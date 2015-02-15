@@ -5,7 +5,10 @@ html/
 *.db
 *.sql*
 
+# c++/qt stuff
 *.pro.user
+*.o
+build-*/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
