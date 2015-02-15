@@ -52,6 +52,9 @@ def parse_index(local_name):
 	return urls
 
 
+
+member_types = set()
+
 def parse_bio(url):
 	"""Parses a biography html and returns a class of Abgeordneter, or False."""
 
@@ -78,8 +81,17 @@ def parse_bio(url):
 	
 	# create a structure
 	A = Abgeordneter()
-	A.name = h1.text.strip()#.encode("UTF-8")
-	A.url = complete_url(url)#.encode("UTF-8")
+	A.url = get_complete_url(base_url, url)
+	A.gremium = u"Bundestag"
+	A.period = u"18"
+	
+	texts = h1.text
+	idx = texts.rfind(",")
+	if idx < 0:
+		A.name = texts.strip()
+	else:
+		A.name = texts[:idx].strip()
+		A.party = texts[idx+1:].strip()
 	
 	#print "[" + A.name + "]"
 	
@@ -90,7 +102,7 @@ def parse_bio(url):
 		if type(img) is Tag:
 			src = img.get("src")
 			if not src is None:
-				A.img_url = complete_url(src)#.encode("UTF-8")
+				A.img_url = get_complete_url(base_url, src)
 				#print A.img_url
 				
 	# Wahlkreis
@@ -99,14 +111,14 @@ def parse_bio(url):
 		if not href == None:
 			if "/wahlkreise" in href:
 				if ":" in a.text:
-					A.wahlkreis = a.text.strip()#.encode("UTF-8")
+					A.wahlkreis = a.text.strip()
 					#print A.wahlkreis
 
 	# parse next tags after name
 	idx = 0
 	for i in h1.next_siblings:
 		if type(i) is Tag:
-			tex = i.text.strip()#.encode("UTF-8")
+			tex = i.text.strip()
 			if len(tex):
 	#			print "---[" + tex + "]"
 				if idx == 0: A.occupation = tex
@@ -121,7 +133,7 @@ def parse_bio(url):
 			if "Mitglied" in i.text:
 				for div in i.find_all("div"):
 					for h3 in div.find_all("h3"):
-						tex = h3.text.strip()#.encode("UTF-8")
+						tex = h3.text.strip()
 						member_types.add(tex)
 						#print "###[" + tex + "]"
 						# ordentliches Mitglied
@@ -160,7 +172,7 @@ def parse_bio(url):
 
 ########################################################################
 
-do_download = True
+do_download = False
 
 # download index file
 if do_download == True:
@@ -181,6 +193,7 @@ if do_download == True:
 errors = 0
 people = []
 for url in urls:
+	print "parsing " + url
 	a = parse_bio(url)
 	if a is False: 
 		print "in " + get_filename(url)
@@ -188,7 +201,9 @@ for url in urls:
 	else:
 		#print unicode(a)
 		people.append( a )
+	#break;
 	
 print str(errors) + " errors"
+print "membership types: " + str(member_types)
 
-bio_save_xml("./bundestag18.xml", people)
+bio_save_xml("./xml/bundestag18.xml", people)
