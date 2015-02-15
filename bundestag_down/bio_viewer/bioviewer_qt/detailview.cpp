@@ -119,7 +119,7 @@ void DetailView::setPerson(const BioData::Person * p)
             {
                 case 0: s << tr("ordentliches Mitglied"); break;
                 case 1: s << tr("stellvertretendes Mitglied"); break;
-                case 2: s << tr("Funktionen"); break;
+                case 2: s << tr("Mitgliedschaften / Beteiligungen"); break;
                 case 3: s << tr("Funktionen vor dem Bundestag"); break;
             }
             s << "</h4><ul>";
