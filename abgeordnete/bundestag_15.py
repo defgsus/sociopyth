@@ -1,6 +1,10 @@
 # encoding=utf-8
 
-# http://www.thueringer-landtag.de/landtag/abgeordnete-und-fraktionen/abgeordnete/
+# TODO: Layout completely different as in 16,17,18
+# here's the index:
+# http://webarchiv.bundestag.de/cgi/show.php?fileToLoad=215&id=1041
+
+
 
 
 from bs4 import BeautifulSoup, Tag
@@ -10,7 +14,7 @@ from tools import Abgeordneter, get_complete_url, download_file, bio_save_xml
 ########################## helper ######################################
 
 base_url = "http://webarchiv.bundestag.de"
-html_dir = "./html/bundestag17/"
+html_dir = "./html/bundestag16/"
 
 def get_bio_filename(url):
 	"""Returns a local filename for the bio url, or False"""
@@ -24,33 +28,6 @@ def get_bio_filename(url):
 
 ########################## parsing #####################################
 
-# this is horseshit
-# for some reason the Bundesregierung-waybackmachine returns invalid hrefs on download
-# so we put the link address back together by hand. e.g. Ackermann, Jens, FDP -> .../ackermann_jens.html
-# UPDATE: fixed, page needed a Referer in the request
-"""
-def get_name_to_url(name):
-	import unicodedata
-	
-	idx = name.rfind(",")
-	if idx < 0:
-		return False
-	name = name[:idx].lower()
-	idx = name.find("(")
-	if idx >= 0:
-		idx2 = name.find(")")
-		name = name[:idx] + name[idx2+1:]
-	name = name.replace(",", "_")
-	name = name.replace(u"ä", "ae")
-	name = name.replace(u"ö", "oe")
-	name = name.replace(u"ü", "ue")
-	name = name.replace(u"ß", "ss")
-	name = name.replace(u"ğ", "g")
-	name = name.replace(u"è", "e")
-	name = unicodedata.normalize('NFKD', name).encode('ascii','ignore')
-	name = name.replace(" ", "")
-	return name + u".html"
-"""	
 
 def parse_index(url, local_name):
 	"""Parses the index file, returns list of urls, or False"""
@@ -116,7 +93,7 @@ def parse_bio(url):
 	A = Abgeordneter()
 	A.url = get_complete_url(base_url, url)
 	A.gremium = u"Bundestag"
-	A.period = u"17"
+	A.period = u"16"
 	
 	texts = h1.text
 	idx = texts.rfind(",")
@@ -205,12 +182,10 @@ def parse_bio(url):
 
 ########################################################################
 
-#print get_name_to_url("Bär (Dessau), Wäöfäram, FDP")
-
-do_download = False
+do_download = True
 
 def get_index_url(i):
-	return base_url + "/archive/2013/1212/bundestag/abgeordnete17/biografien/" + chr(i+65) + "/index.html"
+	return base_url + "/archive/2010/0427/bundestag/abgeordnete/bio/" + chr(i+65) + "/index.html"
 def get_index_filename(i):
 	return html_dir + "index" + chr(i+65) + ".html"
 
@@ -256,5 +231,5 @@ for url in urls:
 print str(errors) + " errors"
 print "membership types: " + str(member_types)
 
-bio_save_xml("./xml/bundestag17.xml", people)
+bio_save_xml("./xml/bundestag16.xml", people)
 

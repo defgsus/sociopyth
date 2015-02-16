@@ -113,7 +113,7 @@ def get_complete_url(base_url, url):
 	return url
 
 
-def download_file(url, local_name):
+def download_file(url, local_name, referer = False):
 	"""Copies the contents of a file from a given URL to a local file.
 	local_name is the filename of the local file to save the contents to. 
 	Any directories will be created if necessary."""
@@ -126,7 +126,12 @@ def download_file(url, local_name):
 	# get url
 	
 	try: 
-		webFile = urllib2.urlopen(url)
+		if referer == False:
+			webFile = urllib2.urlopen(url)
+		else:
+			req = urllib2.Request(url)
+			req.add_header('Referer', referer)
+			webFile = urllib2.urlopen(req)
 	except urllib2.HTTPError:
 		print "failed";
 		return False
