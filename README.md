@@ -21,7 +21,9 @@ all german parliament publications
 
 see /bundestag_down for scripts to download all publications as .pdf (sadly) since the founding of the Bundestag.
 
-see /abgeordnete for collecting the public biographies of all members of parliament (Bundestag & Landtag). Biographies contain educational info and memberships in public and private organizations. The scripts try to collect and separate this info in meaningful classes. Annoyingly, they need to be adjusted for the website of every legislation and for each individual Landtag.    
+see /abgeordnete for collecting the public biographies of all members of parliament (Bundestag & Landtag). Biographies contain educational info and memberships in public and private organizations. The scripts try to collect and separate this info in meaningful classes. Annoyingly, they need to be adjusted for the website of every legislation and for each individual Landtag.
+
+see /bioviewer/bioviewer_qt for a Qt-based display tool for the biography data with full-text search :)
 
 ### http://wikidata.org
 machine readable database of everything
