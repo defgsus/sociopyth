@@ -15,7 +15,7 @@ class Abgeordneter:
             self.member.append(list())
 
     def __str__(self):
-        r = "name   [" + self.name + "]\n" \
+        r =   "name   [" + self.name + "]\n" \
             + "party  [" + self.party + "]\n" \
             + "occup  [" + self.occupation + "]\n" \
             + "birth  [" + self.birth + "]\n" \
@@ -69,7 +69,6 @@ def bio_save_xml(fn, people):
 
     root = ET.Element("bundes-bio")
 
-    # create company nodes
     for c in people:
         P = ET.SubElement(root, "person")
         P.set("name", c.name)
@@ -95,3 +94,32 @@ def bio_save_xml(fn, people):
     # store
     tree = ET.ElementTree(root)
     tree.write(fn, encoding="utf-8", xml_declaration=True)
+
+
+def bio_load_xml(filename):
+    import xml.dom
+    import xml.etree.ElementTree as ET
+
+    people = []
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    for c in root:
+        a = Abgeordneter()
+        a.name = c.get("name")
+        a.occupation = c.get("occupation")
+        a.birth = c.get("birth")
+        a.gremium = c.get("gremium")
+        a.img_url = c.get("img_url")
+        a.url = c.get("url")
+        a.party = c.get("party")
+        a.period = c.get("period")
+        a.wahlkreis = c.get("wahlkreis")
+        for i in c.findall("statements"):
+            a.statements.append( i.get("value") )
+        for j in c.findall("member"):
+            k = int(j.get("type"))
+            if k < 0 or k > len(a.member): raise IndexError
+            a.member[k].append( j.get("value") )
+
+        people.append( a )
+    return people

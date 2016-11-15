@@ -47,9 +47,29 @@ def get_person(name):
 
 from mpbio.models import *
 
-print get_party("FDP")
-p = get_person("Konrad Adenauer")
-p.party = get_party("CDU")
-p.district = get_district("Wahlkreis 1")
-p.parliament = get_parliament("Bundestag")
-p.save()
+def test1():
+    print get_party("FDP")
+    p = get_person("Konrad Adenauer")
+    p.party = get_party("CDU")
+    p.district = get_district("Wahlkreis 1")
+    p.parliament = get_parliament("Bundestag")
+    p.save()
+
+
+def add_people(people):
+    for p in people:
+        m = get_person(p.name)
+        m.party = get_party(p.party)
+        m.district = get_district(p.wahlkreis)
+        m.parliament = get_parliament(p.gremium)
+        m.occupation = p.occupation
+        m.url = p.url
+        m.img_url = p.img_url
+        m.birth = p.birth
+        m.save()
+        print("added %s " % unicode(m))
+
+
+import mpbio_tools
+people = mpbio_tools.bio_load_xml("../abgeordnete/xml/bundestag16.xml")
+add_people(people)

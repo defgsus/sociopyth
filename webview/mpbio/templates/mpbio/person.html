@@ -1,0 +1,12 @@
+{% include "./header.tmpl.html" %}
+
+<h1>{{ person.name }}</h1>
+<p>{{ person.party.name }}</p>
+{% if person.url %}<a href="{{ person.url }}">official site</a>{% endif %}
+{% if person.img_url %}<br/><img src="{{ person.img_url }}"/>{% endif %}
+<hr/>
+
+
+
+
+{% include "./footer.tmpl.html" %}

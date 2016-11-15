@@ -1,0 +1,17 @@
+{% include "./header.tmpl.html" %}
+
+<h1>{{ party.name }}</h1>
+<hr/>
+{% for p in parties %}
+    {% if not p == party %}
+        <a href="{% url 'mpbio:party' p.id %}">{{ p.name }}</a></li>
+    {% else %}
+        {{ p.name }}
+    {% endif %}
+    {% if not forloop.last %} | {% endif %}
+{% endfor %}
+<hr/>
+
+{% include "./people_table.tmpl.html" %}
+
+{% include "./footer.tmpl.html" %}

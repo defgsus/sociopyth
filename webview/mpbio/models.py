@@ -17,8 +17,6 @@ class District(models.Model):
 
 class Parliament(models.Model):
     name = models.TextField(unique=True)
-    date_start = models.DateField(default=datetime(1970, 1, 1))
-    date_end = models.DateField(default=datetime(1974, 1, 1))
 
     def __str__(self): return "Parliament(%s)" % self.name
 
@@ -28,7 +26,7 @@ class Person(models.Model):
     url = models.URLField()
     img_url = models.URLField()
     occupation = models.TextField()
-    birth = models.DateField(default=datetime(1970, 1, 1).date())
+    birth = models.TextField()
     party = models.ForeignKey(Party, on_delete=models.CASCADE)
     district = models.ForeignKey(District, on_delete=models.CASCADE)
     # period = ""
