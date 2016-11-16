@@ -36,6 +36,12 @@ class Person(models.Model):
 
     def __str__(self): return "Person(%s)" % self.name
 
+    def get_img_url(self):
+        u1 = self.url[0:self.url.rfind("/")]
+        u2 = self.img_url[self.img_url.find(".de/")+3:]
+        return u1 + u2
+        # return "["+u1+"] [" + u2 + "]"
+
 
 class Statement(models.Model):
     text = models.TextField()

@@ -1,9 +1,13 @@
+
+{% if filter %}<p>Filtered by: {{ filter }}</p>{% endif %}
+{% if people_size %}<p>{{ people_size }} Person{% if people_size != 1 %}en{% endif %}</p>{% endif %}
 <table>
     {% for p in people %}
         {% cycle "row1" "row2" as row silent %}
         <tr class="{{row}}">
             <td><a href="{% url 'mpbio:person' p.id %}">{{ p.name }}</a></td>
             <td>{{ p.occupation }}</td>
+            <td>{{ p.party.name }}</td>
             <td>{% if p.url %}<a href="{{ p.url }}">web</a>{% else %}no web link{% endif %}</td>
         </tr>
     {% empty %}

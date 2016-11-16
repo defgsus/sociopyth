@@ -1,0 +1,19 @@
+{% include "./header.tmpl.html" %}
+
+<h3>Check out these Abgeordnete!</h3>
+<hr/>
+{% for p in parties %}
+    <a href="{% url 'mpbio:party' p.id %}">{{ p.name }}</a></li>
+    {% if not forloop.last %} | {% endif %}
+{% endfor %}
+<hr/>
+
+<form action={% url "mpbio:people" %} method="get">
+    <input type="text" name="include_{{ columns.0 }}" placeholder="Name filter" value="{{ inc_name }}" />
+    <input type="text" name="include_{{ columns.1 }}" placeholder="Beruf filter" value="{{ inc_occ }}" />
+    <input type="submit" value="Filter" />
+</form>
+
+{% include "./people_table.tmpl.html" %}
+
+{% include "./footer.tmpl.html" %}

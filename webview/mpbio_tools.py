@@ -114,7 +114,7 @@ def bio_load_xml(filename):
         a.party = c.get("party")
         a.period = c.get("period")
         a.wahlkreis = c.get("wahlkreis")
-        for i in c.findall("statements"):
+        for i in c.findall("statement"):
             a.statements.append( i.get("value") )
         for j in c.findall("member"):
             k = int(j.get("type"))

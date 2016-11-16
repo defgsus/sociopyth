@@ -12,6 +12,12 @@
 {% endfor %}
 <hr/>
 
+<form action={% url "mpbio:party" party.pk %} method="get">
+    <input type="text" name="include_name" placeholder="Name filter" value="{{ inc_name }}" />
+    <input type="text" name="include_occupation" placeholder="Beruf filter" value="{{ inc_occ }}" />
+    <input type="submit" value="Filter" />
+</form>
+
 {% include "./people_table.tmpl.html" %}
 
 {% include "./footer.tmpl.html" %}

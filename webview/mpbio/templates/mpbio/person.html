@@ -1,12 +1,60 @@
 {% include "./header.tmpl.html" %}
 
 <h1>{{ person.name }}</h1>
+{% if person.get_img_url %}<br/><img src="{{ person.get_img_url }}"/>{% endif %}
 <p>{{ person.party.name }}</p>
 {% if person.url %}<a href="{{ person.url }}">official site</a>{% endif %}
-{% if person.img_url %}<br/><img src="{{ person.img_url }}"/>{% endif %}
+<!--<p>{{ person.url }}</p>
+<p>{{ person.img_url }}</p>
+<p>{{ person.get_img_url }}</p>-->
 <hr/>
 
+<h3>birth</h3>
+<p>{{ person.birth }}</p>
 
+<h3>biography</h3>
+<ul>
+{% for s in statements %}
+    <li>{{ s.text }}</li>
+{% empty %}
+    <li>none</li>
+{% endfor %}
+</ul>
 
+<h3>ordentliches Mitglied</h3>
+<ul>
+{% for s in memberships %}
+    {% if s.rank == 0 %}
+        <li>{{ s.text }}</li>
+    {% endif %}
+{% endfor %}
+</ul>
+
+<h3>stellvertretendes Mitglied</h3>
+<ul>
+{% for s in memberships %}
+    {% if s.rank == 1 %}
+        <li>{{ s.text }}</li>
+    {% endif %}
+{% endfor %}
+</ul>
+
+<h3>Mitgliedschaften / Beteiligungen</h3>
+<ul>
+{% for s in memberships %}
+    {% if s.rank == 2 %}
+        <li>{{ s.text }}</li>
+    {% endif %}
+{% endfor %}
+</ul>
+
+<h3>Funktionen vor dem Amt</h3>
+<ul>
+{% for s in memberships %}
+    {% if s.rank == 3 %}
+        <li>{{ s.text }}</li>
+    {% endif %}
+{% endfor %}
+</ul>
 
 {% include "./footer.tmpl.html" %}
