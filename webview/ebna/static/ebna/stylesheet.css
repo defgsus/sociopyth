@@ -1,3 +1,7 @@
+.row0 {
+	background-color: e0e000;
+}
+
 .row1 {
 	background-color: e0e0ff;
 }
@@ -5,3 +9,7 @@
 .row2 {
 	background-color: d0d0ff;
 	}
+
+.table_num {
+    text-align: right;
+}

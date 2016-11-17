@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'mpbio.apps.MpbioConfig'
+    'mpbio.apps.MpbioConfig',
+    'ebna.apps.EbnaConfig',
 ]
 
 MIDDLEWARE = [
