@@ -1,0 +1,74 @@
+{% include "./header.tmpl.html" %}
+
+<h1>Enkes Beste Nachrichten Analyse</h1>
+<hr/>
+
+<img src="{% url 'ebna:plot' %}?width=800&height=100&sort={{q_items.8}}&search_term={{q_items.0}}&category={{q_items.1}}&source={{q_items.2}}&phrase={{q_items.3}}&year_min={{q_items.4}}&year_max={{q_items.5}}"/>
+
+<table>
+    <form action="{% url 'ebna:index' %}">
+        <tr class="row0">
+            <td>
+                sort by:
+                <select name="sort">
+                    {% for c in sort_terms %}
+                        <option value="{{ c }}" {% if c == q_items.8 %}selected="selected"{% endif %}>
+                            {{ c }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <input type="submit" value="?" />
+            </td>
+            <td>hits: {{ num_hits }}</td>
+        </tr>
+        <tr class="row0">
+            <td>
+                <select name="search_term">
+                    {% for c in search_terms %}
+                        <option value="{{ c.short_name }}" {% if c.short_name == q_items.0 %}selected="selected"{% endif %}>
+                            {{ c.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <select name="category">
+                    {% for c in categories %}
+                        <option value="{{ c.name }}" {% if c.name == q_items.1 %}selected="selected"{% endif %}>
+                            {{ c.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input type="text" name="source" placeholder="source" value="{{ q_items.2 }}" />
+            </td>
+            <td>
+                <input type="text" name="phrase" placeholder="phrase" value="{{ q_items.3 }}" />
+            </td>
+            <td>
+                <input type="text" name="year_min" placeholder="year_min" value="{{ q_items.4 }}" />
+                <input type="text" name="year_max" placeholder="year_max" value="{{ q_items.5 }}" />
+            </td>
+            <td>count</td>
+            <td>f1</td>
+            <td></td>
+            <td>f2</td>
+        </tr>
+    </form>
+    {% for f in freqs %}
+        <tr class="{% cycle 'row1' 'row2' %}">
+            <td>{{ f.search_term.name }}</td>
+            <td>{{ f.category.name }}</td>
+            <td>{{ f.source.name }}</td>
+            <td>{{ f.phrase.text }}</td>
+            <td class="table_num">{{ f.year }}</td>
+            <td class="table_num">{{ f.count }}</td>
+            <td class="table_num">{{ f.f1 }}</td>
+            <td class="table_num">{{ f.f1_as_dots }}</td>
+            <td class="table_num">{{ f.f2 }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+{% include "./footer.tmpl.html" %}

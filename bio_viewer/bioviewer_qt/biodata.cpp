@@ -33,8 +33,6 @@ bool BioData::loadXml(const QString &filename)
     if (!f.open(QFile::ReadOnly | QFile::Text))
         return false;
 
-    clear();
-
     QDomDocument dom;
 
     if (!dom.setContent(&f))
@@ -48,11 +46,14 @@ bool BioData::loadXml(const QString &filename)
 
         Person p;
         p.name = n.attributes().namedItem("name").nodeValue();
+        p.party = n.attributes().namedItem("party").nodeValue();
         p.url = n.attributes().namedItem("url").nodeValue();
         p.img_url = n.attributes().namedItem("img_url").nodeValue();
         p.occupation = n.attributes().namedItem("occupation").nodeValue();
         p.birth = n.attributes().namedItem("birth").nodeValue();
         p.wahlkreis = n.attributes().namedItem("wahlkreis").nodeValue();
+        p.gremium = n.attributes().namedItem("gremium").nodeValue();
+        p.period = n.attributes().namedItem("period").nodeValue();
 
         auto childs = n.childNodes();
         for (int j=0; j<childs.length(); ++j)

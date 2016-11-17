@@ -1,0 +1,44 @@
+
+{% if filter %}<p>Filtered by: {{ filter }}</p>{% endif %}
+{% if people_size %}<p>{{ people_size }} Person{% if people_size != 1 %}en{% endif %}</p>{% endif %}
+
+{% if people %}
+    <table>
+        <tr class="header">
+            <td>{{ columns.0 }}</td>
+            <td>{{ columns.1 }}</td>
+            <td>{{ columns.2 }}</td>
+            <td>{{ columns.3 }}</td>
+        </tr>
+        <form action={% url "mpbio:people" %} method="get">
+        <tr class="header2">
+            <td>
+                <input type="text" name="include_{{ columns.0 }}" placeholder="filter" value="{{ filter_values.0 }}" />
+                <input type="submit" value="" />
+            </td>
+            <td>
+                <input type="text" name="include_{{ columns.1 }}" placeholder="filter" value="{{ filter_values.1 }}" />
+                <input type="submit" value="" />
+            </td>
+            <td>
+                <input type="text" name="include_{{ columns.2 }}" placeholder="filter" value="{{ filter_values.2 }}" />
+                <input type="submit" value="" />
+            </td>
+            <td>
+                <input type="text" name="include_{{ columns.3 }}" placeholder="filter" value="{{ filter_values.3 }}" />
+                <input type="submit" value="" />
+            </td>
+        </tr>
+        </form>
+        {% for p in people %}
+            {% cycle "row1" "row2" as row silent %}
+            <tr class="{{row}}">
+                <td><a href="{% url 'mpbio:person' p.id %}">{{ p.name }}</a></td>
+                <td>{{ p.occupation }}</td>
+                <td>{{ p.party.name }}</td>
+                <td><img src="{% url 'mpbio:wordcloud' p.id %}?width=160&height=100"/></td>
+                <td>{% if p.url %}<a href="{{ p.url }}">web</a>{% else %}no web link{% endif %}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endif %}

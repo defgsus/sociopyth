@@ -27,7 +27,10 @@ public:
             birth,
             url,
             img_url,
-            wahlkreis;
+            wahlkreis,
+            period,
+            gremium,
+            party;
         QStringList statements;
         QVector<QStringList> memberships;
     };

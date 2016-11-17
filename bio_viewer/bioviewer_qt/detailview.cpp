@@ -84,11 +84,12 @@ void DetailView::setPerson(const BioData::Person * p)
     QString text;
     QTextStream s(&text);
 
-    s << "<html><h1>" << p->name << "</h1>\n"
-      << "<ul><li>" << p->wahlkreis << "</li>\n"
+    s << "<html><h1>" << p->name << " (" << p->party << ")</h1>\n<ul>"
+      << "<li>" << p->gremium << ", Wahlperiode " << p->period << "</li>\n"
+      << "<li>" << p->wahlkreis << "</li>\n"
       << "<li>" << p->birth << "</li>\n"
       << "<li>" << p->occupation << "</li>\n"
-      << "<li><a href=\"" << p->url << "\">bundestag.de</a></li>\n"
+      << "<li><a href=\"" << p->url << "\">" << QUrl(p->url).host() << "</a></li>\n"
       << "</ul>";
 
     if (!p->statements.empty())
@@ -119,8 +120,8 @@ void DetailView::setPerson(const BioData::Person * p)
             {
                 case 0: s << tr("ordentliches Mitglied"); break;
                 case 1: s << tr("stellvertretendes Mitglied"); break;
-                case 2: s << tr("Funktionen"); break;
-                case 3: s << tr("Funktionen vor dem Bundestag"); break;
+                case 2: s << tr("Mitgliedschaften / Beteiligungen"); break;
+                case 3: s << tr("Funktionen vor dem Amt"); break;
             }
             s << "</h4><ul>";
 

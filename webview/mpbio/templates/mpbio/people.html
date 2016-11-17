@@ -1,0 +1,13 @@
+{% include "./header.tmpl.html" %}
+
+<h3>Check out these Abgeordnete!</h3>
+<hr/>
+{% for p in parties %}
+    <a href="{% url 'mpbio:party' p.id %}">{{ p.name }}</a></li>
+    {% if not forloop.last %} | {% endif %}
+{% endfor %}
+<hr/>
+
+{% include "./people_table.tmpl.html" %}
+
+{% include "./footer.tmpl.html" %}

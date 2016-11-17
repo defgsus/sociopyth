@@ -13,6 +13,7 @@
 #define BIOLISTMODEL_H
 
 #include <QAbstractItemModel>
+#include <QStringList>
 
 class BioData;
 

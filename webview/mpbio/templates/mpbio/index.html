@@ -1,0 +1,11 @@
+{% include "./header.tmpl.html" %}
+
+<ul>
+    {% for p in parties %}
+        <li><a href="{% url 'mpbio:party' p.id %}">{{ p.name }}</a></li>
+    {% empty %}
+        <li>no party data</li>
+    {% endfor %}
+</ul>
+
+{% include "./footer.tmpl.html" %}

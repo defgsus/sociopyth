@@ -82,8 +82,10 @@ void MainWindow::createWidgets_()
 
 void MainWindow::load()
 {
-    if (!data_->loadXml("../../parlament_bio18.xml"))
-        QMessageBox::critical(this, tr("error"), tr("Could not load xml file"));
+    data_->loadXml("../../abgeordnete/xml/bundestag18.xml");
+    data_->loadXml("../../abgeordnete/xml/bundestag17.xml");
+    data_->loadXml("../../abgeordnete/xml/landtag_th6.xml");
+        //QMessageBox::critical(this, tr("error"), tr("Could not load xml file"));
 
     // update models
     delete fmodel_;
