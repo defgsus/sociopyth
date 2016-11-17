@@ -8,12 +8,6 @@
 {% endfor %}
 <hr/>
 
-<form action={% url "mpbio:people" %} method="get">
-    <input type="text" name="include_{{ columns.0 }}" placeholder="Name filter" value="{{ inc_name }}" />
-    <input type="text" name="include_{{ columns.1 }}" placeholder="Beruf filter" value="{{ inc_occ }}" />
-    <input type="submit" value="Filter" />
-</form>
-
 {% include "./people_table.tmpl.html" %}
 
 {% include "./footer.tmpl.html" %}

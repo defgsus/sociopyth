@@ -4,15 +4,13 @@ import django
 django.setup()
 
 
-def get_party(name):
-    try:
-        return Party.objects.get(name=name)
-    except Party.DoesNotExist:
-        p = Party(name=name)
-        p.save()
-        return p
-    except:
-        raise
+def get_party(in_name):
+    name = in_name.replace("\n", "").replace("*", "").replace(".","").strip()
+    objs = Party.objects.filter(name__icontains = name)
+    if objs: return objs[0]
+    p = Party(name=name)
+    p.save()
+    return p
 
 
 def get_district(name):
@@ -46,17 +44,20 @@ def get_person(name):
         raise
 
 
-def get_statement(text, person):
+def get_statement(in_text, person):
+    text = in_text.replace("\n", "").strip()
     try:
         return Statement.objects.get(text=text, person=person)
     except Statement.DoesNotExist:
         p = Statement(text=text, person=person)
+        p.save()
         return p
     except:
         raise
 
 
-def get_membership(text, rank, person):
+def get_membership(in_text, rank, person):
+    text = in_text.replace("\n", "").strip()
     try:
         return Membership.objects.get(text=text, rank=rank, person=person)
     except Membership.DoesNotExist:
@@ -94,9 +95,7 @@ def add_people(people):
 
             # print p.statements
             for stmt in p.statements:
-                s = get_statement(stmt, m)
-                s.person = m
-                s.save()
+                get_statement(stmt, m)
 
             for k in range(len(p.member)):
                 for stmt in p.member[k]:
