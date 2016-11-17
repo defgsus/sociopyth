@@ -43,7 +43,11 @@ def filter_freqs(freqs, values, q_items):
     f = values.get("source", "")
     q_items[2] = f
     if f:
-        freqs = freqs.filter(source__name__icontains = f)
+        if f.startswith('"') or f.endswith('"'):
+            f = f.replace('"','')
+            freqs = freqs.filter(source__name__iexact = f)
+        else:
+            freqs = freqs.filter(source__name__icontains=f)
 
     f = values.get("phrase", "")
     q_items[3] = f
@@ -83,16 +87,32 @@ def index_view(request):
 def image_plot(request):
     import pil_plot
 
+    try:
+        width=int(request.GET.get("width", 800))
+        height=int(request.GET.get("height", 100))
+    except:
+        width=320
+        height=200
+
     q_items = range(9)
     freqs = Frequency.objects.all()
-    freqs = filter_freqs(freqs, request.GET, q_items)
+    g = request.GET.copy()
+    g.pop("source")
+    freqs = filter_freqs(freqs, g, q_items)
     freqs = freqs.order_by("year")
 
     data = []
     for i in freqs:
-        data.append( (i.year, i.f1, ) )
+        if i.source.name.lower() == "spiegel":
+            data.append( (i.year, i.f1, ) )
+    image = pil_plot.get_plot_image(data, width=width, height=height, color="hsl(0,50%,50%)")
 
-    image = pil_plot.get_plot_image(data, 800,100)
+    data2 = []
+    for i in freqs:
+        if i.source.name.lower() == "zeit":
+            data2.append( (i.year, i.f1, ) )
+    pil_plot.plot_image(image, data2, xy_ref=data)
+
     response = HttpResponse(content_type="image/png")
     image.save(response, format="png")
     return response

@@ -3,7 +3,7 @@
 <h1>Enkes Beste Nachrichten Analyse</h1>
 <hr/>
 
-<img src="{% url 'ebna:plot' %}?sort={{q_items.8}}&search_term={{q_items.0}}&category={{q_items.1}}&source={{q_items.2}}&phrase={{q_items.3}}&year_min={{q_items.4}}&year_max={{q_items.5}}"/>
+<img src="{% url 'ebna:plot' %}?width=800&height=100&sort={{q_items.8}}&search_term={{q_items.0}}&category={{q_items.1}}&source={{q_items.2}}&phrase={{q_items.3}}&year_min={{q_items.4}}&year_max={{q_items.5}}"/>
 
 <table>
     <form action="{% url 'ebna:index' %}">
