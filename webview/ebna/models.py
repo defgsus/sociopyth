@@ -12,7 +12,10 @@ class SearchTerm(models.Model):
     name = models.CharField(max_length=512)
 
     def __str__(self): return "SearchTerm(%s)" % self.name
-
+    def short_name(self):
+        s = str(self.name).split(",")
+        if not s: return ""
+        return s[0]
 
 class Category(models.Model):
     name = models.CharField(max_length=256)
@@ -38,3 +41,5 @@ class Frequency(models.Model):
     search_term = models.ForeignKey(SearchTerm, on_delete=models.CASCADE)
 
     def __str__(self): return "Frequency(%s, %s, %d)" % (self.phrase.text, self.source.name, self.year)
+    def f1_as_dots(self):
+        return "." * int(1+self.f1)
